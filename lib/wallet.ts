@@ -1,5 +1,6 @@
-// /lib/wallet.ts
 import nacl from "tweetnacl";
+
+const STORAGE_KEY = "linera_wallet";
 
 export function generateWallet() {
   const keyPair = nacl.sign.keyPair();
@@ -9,6 +10,7 @@ export function generateWallet() {
     secretKey: Buffer.from(keyPair.secretKey).toString("hex"),
   };
 
+  saveWalletToLocal(wallet);
   return wallet;
 }
 
@@ -16,7 +18,6 @@ export function downloadWallet(wallet: any) {
   const blob = new Blob([JSON.stringify(wallet, null, 2)], {
     type: "application/json",
   });
-
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -26,5 +27,22 @@ export function downloadWallet(wallet: any) {
 
 export async function loadWallet(file: File) {
   const text = await file.text();
-  return JSON.parse(text);
+  const wallet = JSON.parse(text);
+  saveWalletToLocal(wallet);
+  return wallet;
+}
+
+// ----- LOCAL STORAGE -----
+export function saveWalletToLocal(wallet: any) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
+}
+
+export function getWalletFromLocal(): any | null {
+  const w = localStorage.getItem(STORAGE_KEY);
+  if (!w) return null;
+  return JSON.parse(w);
+}
+
+export function clearWallet() {
+  localStorage.removeItem(STORAGE_KEY);
     }
