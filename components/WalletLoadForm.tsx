@@ -1,19 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { loadWalletFromSecretKey } from "@/lib/wallet";
+import { loadWalletFromSecretKey, saveWalletToLocal } from "@/lib/wallet";
 
-export default function WalletLoadForm() {
+export default function WalletLoadForm({ setWallet }: { setWallet: (wallet: any) => void }) {
   const [secretKey, setSecretKey] = useState("");
-  const [wallet, setWallet] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLoad = async () => {
     try {
       const w = await loadWalletFromSecretKey(secretKey);
       setWallet(w);
-      // Simpan ke local storage kalau perlu
+      saveWalletToLocal(w);
+      setError(null);
     } catch (e) {
-      alert("Invalid secret key");
+      setError("Invalid secret key");
     }
   };
 
@@ -32,11 +33,7 @@ export default function WalletLoadForm() {
         Load Wallet
       </button>
 
-      {wallet && (
-        <div className="mt-4">
-          <p><b>Public Key:</b> {wallet.publicKey}</p>
-        </div>
-      )}
+      {error && <p className="text-red-600">{error}</p>}
     </div>
   );
 }
