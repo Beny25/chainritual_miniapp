@@ -3,17 +3,21 @@
 import { useState, useEffect } from "react";
 import { generateWallet, downloadWallet, getWalletFromLocal } from "@/lib/wallet";
 
-export default function WalletCreateForm() {
-  const [wallet, setWallet] = useState<any>(null);
+export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: any) => void }) {
+  const [wallet, setLocalWallet] = useState<any>(null);
 
   useEffect(() => {
     const saved = getWalletFromLocal();
-    if (saved) setWallet(saved);
-  }, []);
+    if (saved) {
+      setLocalWallet(saved);
+      setWallet(saved); // update parent
+    }
+  }, [setWallet]);
 
   const handleCreate = () => {
     const w = generateWallet();
-    setWallet(w);
+    setLocalWallet(w);
+    setWallet(w); // update parent
   };
 
   return (
@@ -38,4 +42,4 @@ export default function WalletCreateForm() {
       )}
     </div>
   );
-}
+    }
