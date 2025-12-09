@@ -7,9 +7,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
   }
 
-  // Pakai RPC URL dari env.local
   const RPC_URL = process.env.NEXT_PUBLIC_LINERA_RPC!;
-
+  
   try {
     const res = await fetch(`${RPC_URL}/faucet`, {
       method: "POST",
@@ -17,9 +16,16 @@ export async function POST(req: Request) {
       body: JSON.stringify({ public_key: publicKey }),
     });
 
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text }; // kalau bukan JSON
+    }
+
     return NextResponse.json(data);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Faucet request failed" }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
