@@ -7,10 +7,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
   }
 
-  const RPC_URL = process.env.NEXT_PUBLIC_LINERA_RPC!;
-  
+  const FAUCET_URL = "https://faucet.testnet-conway.linera.net";
+
   try {
-    const res = await fetch(`${RPC_URL}/faucet`, {
+    const res = await fetch(FAUCET_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ public_key: publicKey }),
@@ -19,9 +19,9 @@ export async function POST(req: Request) {
     const text = await res.text();
     let data;
     try {
-      data = JSON.parse(text);
+      data = JSON.parse(text); // parse JSON dari faucet
     } catch {
-      data = { raw: text }; // kalau bukan JSON
+      data = { raw: text || "Faucet request sent!" }; // fallback kalau kosong
     }
 
     return NextResponse.json(data);
