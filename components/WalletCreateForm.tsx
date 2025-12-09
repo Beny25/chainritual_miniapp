@@ -23,10 +23,10 @@ export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: an
   return (
     <div className="p-4 border rounded-xl bg-white">
       <button
-        onClick={handleCreate}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-      >
-        Create Wallet
+  onClick={handleCreate}
+  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 active:bg-blue-800 transition transform duration-150 ease-in-out"
+       >
+     Create Wallet
       </button>
 
       {wallet && (
