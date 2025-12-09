@@ -31,7 +31,20 @@ export async function loadWallet(file: File) {
   saveWalletToLocal(wallet);
   return wallet;
 }
-
+export function loadWalletFromSecretKey(secretKeyHex: string) {
+  try {
+    const secretKeyBytes = Buffer.from(secretKeyHex, "hex");
+    const keyPair = nacl.sign.keyPair.fromSecretKey(secretKeyBytes);
+    const wallet = {
+      publicKey: Buffer.from(keyPair.publicKey).toString("hex"),
+      secretKey: secretKeyHex,
+    };
+    saveWalletToLocal(wallet);
+    return wallet;
+  } catch (error) {
+    throw new Error("Invalid secret key");
+  }
+}
 // ----- LOCAL STORAGE -----
 export function saveWalletToLocal(wallet: any) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
