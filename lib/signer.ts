@@ -13,7 +13,7 @@ function isBrowser() {
 // ----------- Generate Wallet -----------
 
 export async function generateWallet() {
-  const privateKey = ed.utils.randomPrivateKey();
+  const privateKey = ed.utils.randomSecretKey();
   const publicKey = await ed.getPublicKeyAsync(privateKey);
 
   const wallet = {
