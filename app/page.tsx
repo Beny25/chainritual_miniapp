@@ -20,8 +20,12 @@ export default function Page() {
     <div className="max-w-xl mx-auto mt-12 space-y-6">
       <h1 className="text-2xl font-bold">Linera Wallet Mini-App</h1>
 
-      <WalletCreateForm />
-      <WalletLoadForm />
+      {!wallet && (
+        <>
+          <WalletCreateForm setWallet={setWallet} />
+          <WalletLoadForm setWallet={setWallet} />
+        </>
+      )}
 
       {wallet && (
         <div className="space-y-4">
