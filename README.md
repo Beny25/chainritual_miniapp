@@ -2,7 +2,7 @@
 # Testnet Conway
 
 [![License](https://img.shields.io/github/license/Beny25/chainritual_miniapp)](LICENSE)
-[![Twitter](https://img.shields.io/twitter/follow/Alidepok1)](https://x.com/Alidepok1)
+[![Twitter](https://img.shields.io/twitter/follow/bandit.base.eth)](https://x.com/Alidepok1)
 
 # Linera Wallet Miniapp
 
