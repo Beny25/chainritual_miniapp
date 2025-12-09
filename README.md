@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# <img src="https://github.com/linera-io/linera-protocol/assets/1105398/fe08c941-93af-4114-bb83-bcc0eaec95f9" width="250" height="85" />
+# Testnet Conway
 
-## Getting Started
+[![License](https://img.shields.io/github/license/Beny25/chainritual_miniapp)](LICENSE)
+[![Twitter](https://img.shields.io/twitter/follow/Alidepok1)](https://x.com/Alidepok1)
 
-First, run the development server:
+# Linera Wallet Miniapp
 
-```bash
+**Miniapp wallet sederhana** untuk membuat, memuat, dan mengelola wallet di Linera blockchain. Cocok untuk edukasi, testing, dan eksperimen blockchain.
+
+---
+
+## 🚀 Fitur Saat Ini
+- ✨ **Create wallet baru** dengan generate keypair
+- 💾 **Download wallet JSON** (public & secret key)
+- 📂 **Load wallet** dari file JSON yang diupload
+
+---
+
+## 🛠 Roadmap / Rencana Pengembangan
+
+### Fase 1: Dasar
+- [x] Create wallet dan tampilkan public key
+- [x] Download wallet JSON
+- [x] Load wallet dari file JSON
+- [ ] Simpan wallet ke localStorage untuk persistent session
+
+### Fase 2: Interaksi Blockchain
+- [ ] Request testnet faucet token (Linera testnet)
+- [ ] Kirim transaksi / send token antar wallet
+
+### Fase 3: UX/UI Improvement
+- [ ] Tambah notifikasi sukses/gagal
+- [ ] Loading state pada aksi async
+- [ ] Desain UI lebih menarik dan responsif
+
+### Fase 4: Keamanan & Backup
+- [ ] Fitur backup manual & restore wallet
+- [ ] Enkripsi localStorage wallet dengan password
+
+### Fase 5: Deployment & Testing
+- [ ] Deploy ke Vercel / platform hosting
+- [ ] Automated tests & linting setup
+
+---
+
+## 💻 Cara Pakai
+1. Clone repo:  
+   ```bash
+   git clone https://github.com/Beny25/chainritual_miniapp.git
+
+2. Masuk folder project:
+
+cd chainritual_miniapp
+
+
+3. Install dependencies:
+
+npm install
+
+
+4. Jalankan aplikasi:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+5. Buka browser di http://localhost:3000 dan coba fitur wallet!
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+📣 Author
 
-## Deploy on Vercel
+Bandit.base eth
+Twitter: @Alidepok1
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+📝 Catatan
+
+Miniapp ini untuk edukasi dan testing Linera blockchain. Private key sepenuhnya disimpan di sisi user, tidak dikirim ke server. Gunakan dengan aman, jangan pakai untuk aset nyata tanpa proteksi tambahan.
+
+
+---
+
+🔗 Link Repo
+
+https://github.com/Beny25/chainritual_miniapp
