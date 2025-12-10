@@ -8,6 +8,7 @@ import FaucetRequest from "@/components/FaucetRequest";
 import SendTokenForm from "@/components/SendTokenForm";
 import { fetchBalance, requestFaucet, sendTokens } from "@/lib/balance";
 import { getWalletFromLocal } from "@/lib/wallet";
+import HeaderBanner from "@/components/HeaderBanner";
 
 export default function Page() {
   const [wallet, setWallet] = useState<any>(null);
@@ -19,8 +20,8 @@ export default function Page() {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-4 space-y-6">
-
-      <h1 className="text-3xl font-bold text-center">Linera Wallet Mini-App</h1>
+      <HeaderBanner />
+      <h1 className="text-3xl font-bold text-center">Linera Wallet MiniApp</h1>
 
       {!wallet && (
         <div className="space-y-4 bg-white p-4 rounded-xl shadow">
