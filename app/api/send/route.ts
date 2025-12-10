@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { from, to, amount, signature } = await req.json();
+  try {
+    const { from, to, amount, signature } = await req.json();
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_LINERA_RPC}/transfer`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to, amount, signature }),
-  });
-
-  const data = await res.json();
-  return NextResponse.json(data);
+    return NextResponse.json({
+      success: true,
+      message: "Dummy transfer simulated.",
+      from,
+      to,
+      amount,
+      signature,
+      txId: "0xtest-" + Date.now(),
+    });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
