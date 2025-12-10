@@ -23,10 +23,11 @@ export async function sendTokens(
   amount: string,
   signature: string
 ) {
-  const res = await fetch(`${RPC_URL}/transfer`, {
+  const res = await fetch("/api/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ from, to, amount, signature }),
   });
-  return res.json();
+
+  return await res.json();
 }
