@@ -2,26 +2,23 @@
 
 import { useState } from "react";
 
-export default function FaucetRequest({ publicKey }: { publicKey: string }) {
+export default function FaucetRequest() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
   const handleRequest = async () => {
     setLoading(true);
-    try {
-      const res = await fetch("/api/faucet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
-      });
+    setResult(null);
 
+    try {
+      const res = await fetch("/api/faucet");
       const data = await res.json();
       setResult(data);
     } catch (err: any) {
       setResult({ error: err.message });
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (
