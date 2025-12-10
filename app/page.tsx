@@ -21,7 +21,6 @@ export default function Page() {
   return (
     <div className="max-w-md mx-auto mt-10 p-4 space-y-6">
       <HeaderBanner />
-      <h1 className="text-3xl font-bold text-center">Linera Wallet MiniApp</h1>
 
       {!wallet && (
         <div className="space-y-4 bg-white p-4 rounded-xl shadow">
