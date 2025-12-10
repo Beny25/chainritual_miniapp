@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import WalletCreateForm from "@/components/WalletCreateForm";
 import WalletLoadForm from "@/components/WalletLoadForm";
-import FaucetRequest from "@/components/FaucetRequest";
 import WalletBalance from "@/components/WalletBalance";
+import FaucetRequest from "@/components/FaucetRequest";
 import SendTokenForm from "@/components/SendTokenForm";
 import { getWalletFromLocal } from "@/lib/wallet";
 
@@ -17,21 +17,26 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="max-w-xl mx-auto mt-12 space-y-6">
-      <h1 className="text-2xl font-bold">Linera Wallet Mini-App</h1>
+    <div className="max-w-md mx-auto mt-10 p-4 space-y-6">
+
+      <h1 className="text-3xl font-bold text-center">Linera Wallet Mini-App</h1>
 
       {!wallet && (
-        <>
+        <div className="space-y-4 bg-white p-4 rounded-xl shadow">
           <WalletCreateForm setWallet={setWallet} />
           <WalletLoadForm setWallet={setWallet} />
-        </>
+        </div>
       )}
 
       {wallet && (
-        <div className="space-y-4">
-          <p className="font-mono break-all">
-            <b>Public Key:</b> {wallet.publicKey}
-          </p>
+        <div className="space-y-4 bg-white p-4 rounded-xl shadow">
+
+          <div className="text-sm">
+            <span className="font-semibold">Public Key:</span>
+            <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
+              {wallet.publicKey}
+            </div>
+          </div>
 
           <WalletBalance publicKey={wallet.publicKey} />
           <FaucetRequest />
@@ -41,4 +46,3 @@ export default function Page() {
     </div>
   );
 }
-
