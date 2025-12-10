@@ -1,25 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getBalance } from "@/lib/linera";
 
 export default function WalletBalance({ publicKey }: { publicKey: string }) {
-  const [balance, setBalance] = useState<any>(null);
-
-  const fetchBalance = async () => {
-    const data = await getBalance(publicKey);
-    setBalance(data);
-  };
+  const [balance, setBalance] = useState<string>("Loading...");
 
   useEffect(() => {
-    fetchBalance();
-    const interval = setInterval(fetchBalance, 10000); // refresh tiap 10 detik
-    return () => clearInterval(interval);
+    // Dummy balance (biar tampilan rapi)
+    setTimeout(() => {
+      setBalance("50 TEST"); // fake balance
+    }, 600);
   }, [publicKey]);
 
   return (
-    <div className="p-4 border rounded-xl bg-white mt-4">
-      <b>Balance:</b> {balance ? JSON.stringify(balance) : "Loading..."}
+    <div className="p-4 border rounded-xl bg-white">
+      <div className="font-semibold">Balance:</div>
+      <div className="text-lg">{balance}</div>
     </div>
   );
-}
+      }
