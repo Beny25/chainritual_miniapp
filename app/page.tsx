@@ -34,7 +34,7 @@ export default function Page() {
           </p>
 
           <WalletBalance publicKey={wallet.publicKey} />
-          <FaucetRequest publicKey={wallet.publicKey} />
+          <FaucetRequest />
           <SendTokenForm wallet={wallet} />
         </div>
       )}
