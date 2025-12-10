@@ -1,30 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchBalance } from "@/lib/linera";
-import FaucetRequest from "./FaucetRequest";
 
-export default function WalletCard({ wallet }) {
-  const [balance, setBalance] = useState("Loading...");
-
-  const loadBalance = () => {
-    fetchBalance(wallet.publicKey).then((b) => setBalance(b));
-  };
+export default function WalletBalance({ publicKey }: { publicKey: string }) {
+  const [balance, setBalance] = useState<number>(0);
 
   useEffect(() => {
-    loadBalance();
+    const key = "balance_" + publicKey;
+    const saved = localStorage.getItem(key);
+    if (saved) setBalance(Number(saved));
+  }, [publicKey]);
+
+  // dipanggil dari faucet
+  useEffect(() => {
+    window.addEventListener("balance:update", (e: any) => {
+      if (e.detail?.publicKey === publicKey) {
+        setBalance(e.detail.balance);
+      }
+    });
   }, []);
 
   return (
-    <div className="p-4 rounded-xl bg-white border">
-      <p className="font-bold">Public Key:</p>
-      <p className="text-xs break-all mb-2">{wallet.publicKey}</p>
-
-      <p className="font-bold">Balance:</p>
-      <p className="mb-4">{balance}</p>
-
-      {/* Faucet Request */}
-      <FaucetRequest wallet={wallet} onSuccess={loadBalance} />
+    <div className="p-4 border rounded-xl bg-white">
+      <b>Balance:</b> {balance}
     </div>
   );
 }
