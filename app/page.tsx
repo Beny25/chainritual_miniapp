@@ -35,7 +35,13 @@ export default function Page() {
 
           <WalletBalance publicKey={wallet.publicKey} />
           <FaucetRequest publicKey={wallet.publicKey} />
-          <SendTokenForm wallet={wallet} />
+          {/* Send - coming soon */}
+    <button
+      className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
+      onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
+    >
+      Send Tokens
+    </button>
         </div>
       )}
     </div>
