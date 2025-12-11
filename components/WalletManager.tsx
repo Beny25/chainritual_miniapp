@@ -1,74 +1,104 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   generateWallet,
   downloadWallet,
-  loadWallet,
   getWalletFromLocal,
+  loadWallet,
   saveWalletToLocal,
   clearWallet,
 } from "@/lib/wallet";
 
-export default function WalletManager({ setWallet }: { setWallet: (w: any) => void }) {
-  const [wallet, setLocalWallet] = useState<any>(null);
+type Wallet = {
+  publicKey: string;
+  secretKey: string;
+};
 
-  useEffect(() => {
+type WalletManagerProps = {
+  wallet: Wallet | null;
+  setWallet: React.Dispatch<React.SetStateAction<Wallet | null>>;
+};
+
+export default function WalletManager({ wallet, setWallet }: WalletManagerProps) {
+  const [allWallets, setAllWallets] = useState<Wallet[]>([]);
+
+  // Ambil wallet dari local storage saat komponen mount
+  const refreshWallets = () => {
     const w = getWalletFromLocal();
-    if (w) setLocalWallet(w);
-  }, []);
-
-  const handleCreate = () => {
-    const w = generateWallet();
-    setLocalWallet(w);
-    setWallet(w);
+    if (w) setWallet(w);
+    setAllWallets(w ? [w] : []);
   };
 
+  useEffect(() => {
+    refreshWallets();
+  }, []);
+
+  // Create wallet baru
+  const handleCreate = () => {
+    const newWallet = generateWallet();
+    setWallet(newWallet);
+    setAllWallets([newWallet]);
+  };
+
+  // Load wallet dari file JSON
   const handleLoad = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    try {
-      const w = await loadWallet(e.target.files[0]);
-      setLocalWallet(w);
-      setWallet(w);
-    } catch (err) {
-      alert("Failed to load wallet");
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      try {
+        const loadedWallet = await loadWallet(file);
+        setWallet(loadedWallet);
+        setAllWallets([loadedWallet]);
+      } catch (err) {
+        alert("Failed to load wallet: " + err);
+      }
     }
   };
 
-  const handleBackup = () => {
-    if (!wallet) return;
+  // Download wallet JSON
+  const downloadWalletFile = (wallet: Wallet) => {
     downloadWallet(wallet);
   };
 
+  // Delete wallet (clear local storage and state)
   const handleDelete = () => {
     clearWallet();
-    setLocalWallet(null);
     setWallet(null);
+    setAllWallets([]);
   };
 
   return (
-    <div className="p-4 bg-white rounded-xl shadow space-y-4 max-w-md mx-auto">
+    <div className="space-y-4 p-4 bg-white rounded-xl shadow">
       <div className="flex gap-2">
-        <button onClick={handleCreate} className="px-3 py-1 bg-blue-600 text-white rounded">
+        <button
+          onClick={handleCreate}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+        >
           Create Wallet
         </button>
 
-        <label className="px-3 py-1 bg-gray-300 rounded cursor-pointer">
+        <label className="bg-gray-300 text-black px-4 py-2 rounded-lg cursor-pointer">
           Load Wallet
-          <input type="file" accept=".json" onChange={handleLoad} className="hidden" />
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleLoad}
+            className="hidden"
+          />
         </label>
 
         {wallet && (
           <>
             <button
-              onClick={handleBackup}
-              className="px-3 py-1 bg-green-600 text-white rounded"
+              onClick={() => downloadWalletFile(wallet)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg"
             >
               Backup Wallet
             </button>
+
             <button
               onClick={handleDelete}
-              className="px-3 py-1 bg-red-600 text-white rounded"
+              className="bg-red-600 text-white px-4 py-2 rounded-lg"
             >
               Delete Wallet
             </button>
@@ -78,14 +108,28 @@ export default function WalletManager({ setWallet }: { setWallet: (w: any) => vo
 
       {wallet && (
         <div>
-          <div className="font-semibold">Current Wallet Public Key:</div>
-          <div className="font-mono break-all p-2 bg-gray-100 rounded mt-1">
+          <div className="font-semibold mb-1">Current Wallet Public Key:</div>
+          <div className="font-mono bg-gray-100 p-2 rounded break-all">
             {wallet.publicKey}
           </div>
         </div>
       )}
 
-      {!wallet && <div>No wallet loaded.</div>}
+      {allWallets.length > 1 && (
+        <div>
+          <div className="font-semibold mb-1">Saved Wallets:</div>
+          <ul className="space-y-1 max-h-40 overflow-y-auto">
+            {allWallets.map((w) => (
+              <li
+                key={w.publicKey}
+                className="flex justify-between items-center bg-gray-100 p-2 rounded"
+              >
+                <span className="truncate">{w.publicKey}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
-}
+      }
