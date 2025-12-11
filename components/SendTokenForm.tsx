@@ -55,17 +55,15 @@ export default function SendTokenForm({
     localStorage.setItem(fromKey, String(fromUpdated));
     localStorage.setItem(toKey, String(toUpdated));
 
-    // Broadcast event ke WalletBalance
-    window.dispatchEvent(
-      new CustomEvent("balance:update", {
-        detail: { publicKey: wallet.publicKey, balance: fromUpdated },
-      })
-    );
-    window.dispatchEvent(
-      new CustomEvent("balance:update", {
-        detail: { publicKey: to, balance: toUpdated },
-      })
-    );
+   // broadcast event supaya WalletBalance update
+    window.dispatchEvent(new CustomEvent("balance:update", {
+      detail: { publicKey: wallet.publicKey, balance: fromUpdated },
+    })
+   );
+    window.dispatchEvent(new CustomEvent("balance:update", {
+      detail: { publicKey: to, balance: toUpdated },
+    })
+   );
 
     setTx({ success: true });
     alert(`✅ ${amountNumber} tokens sent to ${to}!`);
