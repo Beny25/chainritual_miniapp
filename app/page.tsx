@@ -6,12 +6,14 @@ import WalletLoadForm from "@/components/WalletLoadForm";
 import WalletBalance from "@/components/WalletBalance";
 import FaucetRequest from "@/components/FaucetRequest";
 import SendTokenForm from "@/components/SendTokenForm";
-import { fetchBalance, requestFaucet, sendTokens } from "@/lib/balance";
 import { getWalletFromLocal } from "@/lib/wallet";
 import HeaderBanner from "@/components/HeaderBanner";
 
 export default function Page() {
   const [wallet, setWallet] = useState<any>(null);
+  const [reloadFlag, setReloadFlag] = useState(0);
+
+  const reloadBalance = () => setReloadFlag(prev => prev + 1);
 
   useEffect(() => {
     const w = getWalletFromLocal();
@@ -32,6 +34,7 @@ export default function Page() {
       {wallet && (
         <div className="space-y-4 bg-white p-4 rounded-xl shadow">
 
+          {/* Public Key Display */}
           <div className="text-sm">
             <span className="font-semibold">Public Key:</span>
             <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
@@ -39,9 +42,15 @@ export default function Page() {
             </div>
           </div>
 
-          <WalletBalance publicKey={wallet.publicKey} />
-<FaucetRequest publicKey={wallet.publicKey} />
-<SendTokenForm wallet={wallet} />
+          {/* Wallet Balance */}
+          <WalletBalance key={reloadFlag} publicKey={wallet.publicKey} />
+
+          {/* Faucet Request */}
+          <FaucetRequest publicKey={wallet.publicKey} reloadBalance={reloadBalance} />
+
+          {/* Send Token */}
+          <SendTokenForm wallet={wallet} reloadBalance={reloadBalance} />
+
         </div>
       )}
     </div>
