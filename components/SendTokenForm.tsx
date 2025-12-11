@@ -33,11 +33,12 @@ export default function SendTokenForm({
     );
 
     const res = await sendTokens(
-      wallet.publicKey,
-      to,
-      Number(amount), // ⬅️ pastiin number
-      Buffer.from(signature).toString("hex")
-    );
+    wallet.publicKey,
+    to,
+    amount, // tetap string
+    Buffer.from(signature).toString("hex")
+  );
+
 
     setTx(res);
     alert("Token sent successfully!");
