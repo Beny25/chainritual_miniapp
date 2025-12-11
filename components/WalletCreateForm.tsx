@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { downloadWallet } from "@/lib/wallet";
-import { generateWallet, getWalletFromLocal } from "@/lib/wallet.client";
-
+import { generateWallet, downloadWallet, getWalletFromLocal } from "@/lib/wallet";
 
 export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: any) => void }) {
   const [wallet, setLocalWallet] = useState<any>(null);
@@ -25,10 +23,10 @@ export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: an
   return (
     <div className="p-4 border rounded-xl bg-white">
       <button
-  onClick={handleCreate}
-  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 active:bg-blue-800 transition transform duration-150 ease-in-out"
-       >
-     Create Wallet
+        onClick={handleCreate}
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+      >
+        Create Wallet
       </button>
 
       {wallet && (
@@ -44,4 +42,4 @@ export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: an
       )}
     </div>
   );
-    }
+}
