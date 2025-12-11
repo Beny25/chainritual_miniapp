@@ -16,32 +16,39 @@ export default function SendTokenForm({
   const [tx, setTx] = useState<any>(null);
 
   const handleSend = async () => {
-  // ================ VALIDASI PUBLIC KEY ================
+  // VALIDASI PUBLIC KEY
   if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
-    alert("Recipient public key harus 64 karakter (hex)!");
+    alert("Recipient public key harus 64 karakter hex!");
     return;
   }
 
-  // ================ VALIDASI AMOUNT ================
+  // VALIDASI AMOUNT
   const amt = Number(amount);
   if (!amount || isNaN(amt) || amt <= 0) {
     alert("Amount harus angka > 0!");
     return;
   }
 
-  // ================ SIGN MESSAGE ================
-  const message = Buffer.from(`${wallet.publicKey}:${to}:${amt}`);
-  const signature = nacl.sign.detached(
-    message,
-    Buffer.from(wallet.secretKey, "hex")
-  );
+  // Kirim ke backend dummy (atau real)
+  const res = await fetch("/api/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: wallet.publicKey,
+      to: to,
+      amount: amt,
+      signature: wallet.secretKey, // dummy
+    }),
+  });
 
-  const res = await sendTokens(
-    wallet.publicKey,
-    to,
-    String(amt),
-    Buffer.from(signature).toString("hex")
-  );
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Send failed");
+    return;
+  }
+
+  alert("Success! TxID: " + data.txId);
 };
 
     // ================ UPDATE BALANCE LOCALLY ================
