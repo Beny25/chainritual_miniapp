@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 
 export default function WalletBalance({ publicKey }: { publicKey: string }) {
   const [balance, setBalance] = useState<number>(0);
+  const reload = () => {
+    const b = fetchBalance(publicKey);
+    setBalance(b);
+  };
 
+  useEffect(() => {
+    reload();
+  }, [publicKey]);
+  
   useEffect(() => {
     const key = "balance_" + publicKey;
     const saved = localStorage.getItem(key);
