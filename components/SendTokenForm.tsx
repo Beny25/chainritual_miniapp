@@ -4,7 +4,13 @@ import { useState } from "react";
 import nacl from "tweetnacl";
 import { sendTokens } from "@/lib/linera";
 
-export default function SendTokenForm({ wallet }: { wallet: any }) {
+export default function SendTokenForm({
+  wallet,
+  reloadBalance, // ⬅️ tambahin prop
+}: {
+  wallet: any;
+  reloadBalance: () => void; // tipe function
+}) {
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [tx, setTx] = useState<any>(null);
@@ -29,12 +35,15 @@ export default function SendTokenForm({ wallet }: { wallet: any }) {
     const res = await sendTokens(
       wallet.publicKey,
       to,
-      amount,
+      Number(amount), // ⬅️ pastiin number
       Buffer.from(signature).toString("hex")
     );
 
     setTx(res);
     alert("Token sent successfully!");
+
+    // ⬅️ reload balance biar WalletBalance update
+    if (reloadBalance) reloadBalance();
   };
 
   return (
