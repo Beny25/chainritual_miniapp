@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createWallet, downloadWallet, getWalletFromLocal } from "@/lib/wallet";
+import { generateWallet, downloadWallet, getWalletFromLocal } from "@/lib/wallet";
 export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: any) => void }) {
   const [wallet, setLocalWallet] = useState<any>(null);
 
@@ -14,7 +14,7 @@ export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: an
   }, [setWallet]);
 
   const handleCreate = () => {
-    const w = createWallet();
+    const w = generateWallet();
     setLocalWallet(w);
     setWallet(w); // update parent
   };
