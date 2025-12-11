@@ -3,24 +3,16 @@
 import { useState } from "react";
 import nacl from "tweetnacl";
 
-export default function SendTokenForm({
-  wallet,
-  reloadBalance,
-}: {
-  wallet: any;
-  reloadBalance?: () => void;
-}) {
+export default function SendTokenForm({ wallet }: { wallet: any }) {
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [tx, setTx] = useState<any>(null);
 
-  const handleSend = async () => {
-    // Validasi input
+  const handleSend = () => {
     if (!to || to.length < 10) {
       alert("Recipient public key tidak valid!");
       return;
     }
-
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       alert("Amount harus angka!");
       return;
@@ -28,15 +20,7 @@ export default function SendTokenForm({
 
     const amountNumber = Number(amount);
 
-    // Buat signature
-    const message = Buffer.from(`${wallet.publicKey}:${to}:${amountNumber}`);
-    const signature = nacl.sign.detached(
-      message,
-      Buffer.from(wallet.secretKey, "hex")
-    );
-    const signatureHex = Buffer.from(signature).toString("hex");
-
-    // Simulasi sendTokens (update localStorage)
+    // keys di localStorage
     const fromKey = "balance_" + wallet.publicKey;
     const toKey = "balance_" + to;
 
@@ -48,28 +32,23 @@ export default function SendTokenForm({
 
     const toCurrent = Number(localStorage.getItem(toKey) || 0);
 
-    // Update saldo
+    // update saldo
     const fromUpdated = fromCurrent - amountNumber;
     const toUpdated = toCurrent + amountNumber;
 
     localStorage.setItem(fromKey, String(fromUpdated));
     localStorage.setItem(toKey, String(toUpdated));
 
-   // broadcast event supaya WalletBalance update
+    // broadcast event ke WalletBalance pengirim & penerima
     window.dispatchEvent(new CustomEvent("balance:update", {
-      detail: { publicKey: wallet.publicKey, balance: fromUpdated },
-    })
-   );
+      detail: { publicKey: wallet.publicKey, balance: fromUpdated }
+    }));
     window.dispatchEvent(new CustomEvent("balance:update", {
-      detail: { publicKey: to, balance: toUpdated },
-    })
-   );
+      detail: { publicKey: to, balance: toUpdated }
+    }));
 
     setTx({ success: true });
     alert(`✅ ${amountNumber} tokens sent to ${to}!`);
-
-    // Reload balance parent kalau ada
-    if (reloadBalance) reloadBalance();
   };
 
   return (
@@ -80,7 +59,6 @@ export default function SendTokenForm({
         value={to}
         onChange={(e) => setTo(e.target.value)}
       />
-
       <input
         className="border p-2 w-full mb-2"
         placeholder="Amount"
@@ -89,14 +67,12 @@ export default function SendTokenForm({
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
       />
-
       <button
         onClick={handleSend}
         className="px-4 py-2 bg-blue-600 text-white rounded-lg"
       >
         Send
       </button>
-
       {tx && (
         <div className="mt-3 p-3 bg-green-100 border border-green-300 rounded-lg text-sm">
           ✅ Transaction sent!
