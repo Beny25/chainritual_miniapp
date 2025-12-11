@@ -14,39 +14,80 @@ export default function SendTokenForm({
   const [amount, setAmount] = useState("");
   const [tx, setTx] = useState<any>(null);
 
-  const handleSend = async () => {
-    // ================= VALIDASI PUBLIC KEY =================
-    if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
-      alert("Recipient public key harus 64 karakter hex!");
-      return;
-    }
+const handleSend = async () => {
+  // ========= VALIDASI PUBLIC KEY =========
+  if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
+    alert("Recipient public key harus 64 karakter hex!");
+    return;
+  }
 
-    // ================= VALIDASI AMOUNT =================
-    const amt = Number(amount);
-    if (!amount || isNaN(amt) || amt <= 0) {
-      alert("Amount harus angka > 0!");
-      return;
-    }
+  // ========= VALIDASI AMOUNT =========
+  const amt = Number(amount);
+  if (!amount || isNaN(amt) || amt <= 0) {
+    alert("Amount harus angka > 0!");
+    return;
+  }
 
-    // ================= API CALL (dummy/real) =================
-    const res = await sendTokens(wallet.publicKey, to, String(amt), wallet.secretKey);
-    if (!res || res.error) {
-      alert(res?.error || "Send failed");
-      return;
-    }
+  // ========= KIRIM KE BACKEND DUMMY / REAL =========
+  const res = await fetch("/api/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: wallet.publicKey,
+      to,
+      amount: amt,
+      signature: wallet.secretKey, // dummy
+    }),
+  });
 
-    // ================= UPDATE BALANCE LOCALLY =================
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.error || "Send failed");
+    return;
+  }
+
+  alert("Success! TxID: " + data.txId);
+
+  // ========= UPDATE BALANCE (HANYA DI BROWSER) =========
+  if (typeof window !== "undefined") {
     const senderKey = "balance_" + wallet.publicKey;
     const receiverKey = "balance_" + to;
 
     const senderBalance = Number(localStorage.getItem(senderKey) || 0);
     const receiverBalance = Number(localStorage.getItem(receiverKey) || 0);
 
-    const newSenderBalance = senderBalance - amt;
-    const newReceiverBalance = receiverBalance + amt;
+    // kurangi saldo pengirim
+    localStorage.setItem(senderKey, String(senderBalance - amt));
 
-    localStorage.setItem(senderKey, String(newSenderBalance));
-    localStorage.setItem(receiverKey, String(newReceiverBalance));
+    // tambah saldo penerima
+    localStorage.setItem(receiverKey, String(receiverBalance + amt));
+
+    // broadcast ke UI
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: {
+          publicKey: wallet.publicKey,
+          balance: senderBalance - amt,
+        },
+      })
+    );
+
+    // ========= SIMPAN HISTORY TX =========
+    const histKey = "history_" + wallet.publicKey;
+    const prev = JSON.parse(localStorage.getItem(histKey) || "[]");
+
+    const newTx = {
+      txId: data.txId,
+      to,
+      amount: amt,
+      direction: "sent",
+      timestamp: Date.now(),
+    };
+
+    localStorage.setItem(histKey, JSON.stringify([newTx, ...prev]));
+  }
+};
 
     // Update UI (sender)
     window.dispatchEvent(
