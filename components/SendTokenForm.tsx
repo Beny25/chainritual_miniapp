@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import nacl from "tweetnacl";
 import { sendTokens } from "@/lib/linera";
 
 export default function SendTokenForm({
@@ -16,76 +15,61 @@ export default function SendTokenForm({
   const [tx, setTx] = useState<any>(null);
 
   const handleSend = async () => {
-  // VALIDASI PUBLIC KEY
-  if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
-    alert("Recipient public key harus 64 karakter hex!");
-    return;
-  }
+    // ================= VALIDASI PUBLIC KEY =================
+    if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
+      alert("Recipient public key harus 64 karakter hex!");
+      return;
+    }
 
-  // VALIDASI AMOUNT
-  const amt = Number(amount);
-  if (!amount || isNaN(amt) || amt <= 0) {
-    alert("Amount harus angka > 0!");
-    return;
-  }
+    // ================= VALIDASI AMOUNT =================
+    const amt = Number(amount);
+    if (!amount || isNaN(amt) || amt <= 0) {
+      alert("Amount harus angka > 0!");
+      return;
+    }
 
-  // Kirim ke backend dummy (atau real)
-  const res = await fetch("/api/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: wallet.publicKey,
-      to: to,
-      amount: amt,
-      signature: wallet.secretKey, // dummy
-    }),
-  });
+    // ================= API CALL (dummy/real) =================
+    const res = await sendTokens(wallet.publicKey, to, String(amt), wallet.secretKey);
+    if (!res || res.error) {
+      alert(res?.error || "Send failed");
+      return;
+    }
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.error || "Send failed");
-    return;
-  }
-
-  alert("Success! TxID: " + data.txId);
-};
-
-    // ================ UPDATE BALANCE LOCALLY ================
+    // ================= UPDATE BALANCE LOCALLY =================
     const senderKey = "balance_" + wallet.publicKey;
     const receiverKey = "balance_" + to;
 
     const senderBalance = Number(localStorage.getItem(senderKey) || 0);
     const receiverBalance = Number(localStorage.getItem(receiverKey) || 0);
 
-    // sender berkurang
-    localStorage.setItem(senderKey, String(senderBalance - amt));
+    const newSenderBalance = senderBalance - amt;
+    const newReceiverBalance = receiverBalance + amt;
 
-    // receiver nambah
-    localStorage.setItem(receiverKey, String(receiverBalance + amt));
+    localStorage.setItem(senderKey, String(newSenderBalance));
+    localStorage.setItem(receiverKey, String(newReceiverBalance));
 
-    // ================ BROADCAST EVENT KE UI ================
+    // Update UI (sender)
     window.dispatchEvent(
       new CustomEvent("balance:update", {
-        detail: {
-          publicKey: wallet.publicKey,
-          balance: senderBalance - amt,
-        },
+        detail: { publicKey: wallet.publicKey, balance: newSenderBalance },
       })
     );
 
+    // Update UI (receiver)
     window.dispatchEvent(
       new CustomEvent("balance:update", {
-        detail: {
-          publicKey: to,
-          balance: receiverBalance + amt,
-        },
+        detail: { publicKey: to, balance: newReceiverBalance },
       })
     );
 
-    reloadBalance(); // refresh komponen sendiri
+    reloadBalance(); // refresh komponen balance pengirim
+
     setTx(res);
-    alert("Token sent successfully!");
+    alert("Success! TxID: " + res.txId);
+
+    // reset input
+    setAmount("");
+    setTo("");
   };
 
   return (
