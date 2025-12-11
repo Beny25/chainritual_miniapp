@@ -6,7 +6,7 @@ import WalletLoadForm from "@/components/WalletLoadForm";
 import WalletBalance from "@/components/WalletBalance";
 import FaucetRequest from "@/components/FaucetRequest";
 import SendTokenForm from "@/components/SendTokenForm";
-import { getWalletFromLocal } from "@/lib/wallet.client";
+import { getWalletFromLocal } from "@/lib/wallet";
 import HeaderBanner from "@/components/HeaderBanner";
 
 export default function Page() {
