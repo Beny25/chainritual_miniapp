@@ -1,30 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getBalance } from "@/lib/linera";
 
 export default function WalletBalance({ publicKey }: { publicKey: string }) {
-  const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState<any>(null);
 
-  const loadBalance = () => {
-    const key = "balance_" + publicKey;
-    const val = Number(localStorage.getItem(key) || 0);
-    setBalance(val);
+  const fetchBalance = async () => {
+    const data = await getBalance(publicKey);
+    setBalance(data);
   };
 
   useEffect(() => {
-    loadBalance();
+    fetchBalance();
+    const interval = setInterval(fetchBalance, 10000);
+    return () => clearInterval(interval);
   }, [publicKey]);
 
-  // listen update from SendTokenForm & Faucet
-  useEffect(() => {
-    const handler = () => loadBalance();
-    window.addEventListener("balance:update", handler);
-    return () => window.removeEventListener("balance:update", handler);
-  }, []);
-
   return (
-    <div className="p-4 border rounded-xl bg-white">
-      <b>Balance:</b> {balance}
+    <div className="p-4 border rounded-xl bg-white mt-4">
+      <b>Balance:</b> {balance ? JSON.stringify(balance) : "Loading..."}
     </div>
   );
 }
