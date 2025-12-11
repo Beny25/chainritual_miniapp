@@ -1,13 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import WalletCreateForm from "@/components/WalletCreateForm";
-import WalletLoadForm from "@/components/WalletLoadForm";
+import WalletManager from "@/components/WalletManager";
 import WalletBalance from "@/components/WalletBalance";
-import FaucetRequest from "@/components/FaucetRequest";
-import SendTokenForm from "@/components/SendTokenForm";
-import { getWalletFromLocal } from "@/lib/wallet";
 import HeaderBanner from "@/components/HeaderBanner";
+import { getWalletFromLocal } from "@/lib/wallet";
 
 export default function Page() {
   const [wallet, setWallet] = useState<any>(null);
@@ -21,20 +18,17 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="max-w-md mx-auto mt-2 p-4 space-y-6">
+    <div className="max-w-md mx-auto mt-4 p-4 space-y-6">
       <HeaderBanner />
 
-      {!wallet && (
-        <div className="space-y-4 bg-white p-4 rounded-xl shadow">
-          <WalletCreateForm setWallet={setWallet} />
-          <WalletLoadForm setWallet={setWallet} />
-        </div>
-      )}
+      {/* Wallet Manager: Create / Load / Select / Delete */}
+      <div className="bg-white p-4 rounded-xl shadow">
+        <WalletManager wallet={wallet} setWallet={setWallet} />
+      </div>
 
+      {/* Show wallet info when available */}
       {wallet && (
-        <div className="space-y-4 bg-white p-4 rounded-xl shadow">
-
-          {/* Public Key Display */}
+        <div className="bg-white p-4 rounded-xl shadow space-y-4">
           <div className="text-sm">
             <span className="font-semibold">Public Key:</span>
             <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
@@ -42,15 +36,13 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Wallet Balance */}
+          {/* Show balance */}
           <WalletBalance key={reloadFlag} publicKey={wallet.publicKey} />
 
-          {/* Faucet Request */}
-          <FaucetRequest publicKey={wallet.publicKey} reloadBalance={reloadBalance} />
-
-          {/* Send Token */}
-          <SendTokenForm wallet={wallet} reloadBalance={reloadBalance} />
-
+          {/* Faucet + Send Token disabled */}
+          <div className="p-3 bg-yellow-100 text-yellow-800 text-sm rounded">
+            Faucet & Send Token features coming soon after public faucet is live.
+          </div>
         </div>
       )}
     </div>
