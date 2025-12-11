@@ -49,8 +49,7 @@ export default function Page() {
           <FaucetRequest publicKey={wallet.publicKey} reloadBalance={reloadBalance} />
 
           {/* Send Token */}
-          <SendTokenForm wallet={wallet} />
-
+          <SendTokenForm wallet={wallet} reloadBalance={reloadBalance} />
 
         </div>
       )}
