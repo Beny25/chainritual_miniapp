@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { safeStorage } from "@/lib/safeStorage";
 import { sendTokens } from "@/lib/linera";
 
 export default function SendTokenForm({
@@ -16,20 +15,20 @@ export default function SendTokenForm({
   const [tx, setTx] = useState<any>(null);
 
   const handleSend = async () => {
-    // ---------------- VALIDASI PUBLIC KEY ----------------
+    // ========= VALIDASI PUBLIC KEY =========
     if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
       alert("Recipient public key harus 64 karakter hex!");
       return;
     }
 
-    // ---------------- VALIDASI AMOUNT ----------------
+    // ========= VALIDASI AMOUNT =========
     const amt = Number(amount);
     if (!amount || isNaN(amt) || amt <= 0) {
       alert("Amount harus angka > 0!");
       return;
     }
 
-    // ---------------- CALL API (dummy / real) ----------------
+    // ========= API CALL =========
     const res = await fetch("/api/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -42,6 +41,7 @@ export default function SendTokenForm({
     });
 
     const data = await res.json();
+
     if (!res.ok) {
       alert(data.error || "Send failed");
       return;
@@ -49,62 +49,52 @@ export default function SendTokenForm({
 
     alert("Success! TxID: " + data.txId);
 
-    // ---------------- UPDATE BALANCE LOCALLY ----------------
-    const senderKey = "balance_" + wallet.publicKey;
-    const receiverKey = "balance_" + to;
-
-    const senderBalance = Number(safeStorage.get(senderKey) || 0);
-    const receiverBalance = Number(safeStorage.get(receiverKey) || 0);
-
-    const newSenderBalance = senderBalance - amt;
-    const newReceiverBalance = receiverBalance + amt;
-
-    safeStorage.set(senderKey, String(newSenderBalance));
-    safeStorage.set(receiverKey, String(newReceiverBalance));
-
-    // ---------------- BROADCAST EVENT KE UI ----------------
+    // ==========================================================
+    //  LOCALSTORAGE — HANYA JALAN DI CLIENT
+    // ==========================================================
     if (typeof window !== "undefined") {
-      // sender update
+      const senderKey = "balance_" + wallet.publicKey;
+      const receiverKey = "balance_" + to;
+
+      const senderBalance = Number(localStorage.getItem(senderKey) || 0);
+      const receiverBalance = Number(localStorage.getItem(receiverKey) || 0);
+
+      const newSender = senderBalance - amt;
+      const newReceiver = receiverBalance + amt;
+
+      localStorage.setItem(senderKey, String(newSender));
+      localStorage.setItem(receiverKey, String(newReceiver));
+
+      // Broadcast ke UI
       window.dispatchEvent(
         new CustomEvent("balance:update", {
-          detail: {
-            publicKey: wallet.publicKey,
-            balance: newSenderBalance,
-          },
+          detail: { publicKey: wallet.publicKey, balance: newSender },
         })
       );
 
-      // receiver update
       window.dispatchEvent(
         new CustomEvent("balance:update", {
-          detail: {
-            publicKey: to,
-            balance: newReceiverBalance,
-          },
+          detail: { publicKey: to, balance: newReceiver },
         })
       );
+
+      // Simpan history
+      const histKey = "history_" + wallet.publicKey;
+      const prev = JSON.parse(localStorage.getItem(histKey) || "[]");
+
+      const txRecord = {
+        txId: data.txId,
+        to,
+        amount: amt,
+        direction: "sent",
+        timestamp: Date.now(),
+      };
+
+      localStorage.setItem(histKey, JSON.stringify([txRecord, ...prev]));
     }
 
-    // ---------------- SAVE HISTORY ----------------
-    const histKey = "history_" + wallet.publicKey;
-    const prev = JSON.parse(safeStorage.get(histKey) || "[]");
-
-    const newTx = {
-      txId: data.txId,
-      to,
-      amount: amt,
-      direction: "sent",
-      timestamp: Date.now(),
-    };
-
-    safeStorage.set(histKey, JSON.stringify([newTx, ...prev]));
-
-    // Refresh balance komponen
     reloadBalance();
-
-    setTx(newTx);
-
-    // Reset input
+    setTx(data);
     setTo("");
     setAmount("");
   };
@@ -136,7 +126,7 @@ export default function SendTokenForm({
 
       {tx && (
         <div className="mt-3 p-3 bg-green-100 border border-green-300 rounded-lg text-sm">
-          ✅ Transaction sent! (TxID: {tx.txId})
+          ✅ Transaction sent!
         </div>
       )}
     </div>
