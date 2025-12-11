@@ -25,6 +25,7 @@ export default function Page() {
       <WalletManager setWallet={setWallet} wallet={wallet} />
 
       {wallet && (
+  <div className="space-y-4 bg-white p-4 rounded-xl shadow">
     {/* Faucet - coming soon */}
     <button
       className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
