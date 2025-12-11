@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import nacl from "tweetnacl";
-import { sendTokens } from "@/lib/linera";
 
 export default function SendTokenForm({ wallet }: { wallet: any }) {
   const [to, setTo] = useState("");
@@ -17,64 +16,64 @@ export default function SendTokenForm({ wallet }: { wallet: any }) {
       return;
     }
 
-    if (!amount || isNaN(amt) || amt <= 0) {
+    if (!amt || amt <= 0) {
       alert("Amount harus angka!");
       return;
     }
 
-    // =====================
-    // 1) SIGN TRANSACTION (dummy)
-    // =====================
-    const message = Buffer.from(`${wallet.publicKey}:${to}:${amt}`);
+    // ----------------------------
+    // 1) Kurangi balance pengirim
+    // ----------------------------
+    const senderKey = "balance_" + wallet.publicKey;
+    const senderBalance = Number(localStorage.getItem(senderKey) || 0);
+
+    if (senderBalance < amt) {
+      alert("Balance tidak cukup!");
+      return;
+    }
+
+    const newSenderBalance = senderBalance - amt;
+    localStorage.setItem(senderKey, String(newSenderBalance));
+
+    // broadcast untuk pengirim (agar WalletBalance update)
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: { publicKey: wallet.publicKey, balance: newSenderBalance },
+      })
+    );
+
+    // ----------------------------
+    // 2) Tambahkan balance penerima
+    // ----------------------------
+    const receiverKey = "balance_" + to;
+    const receiverBalance = Number(localStorage.getItem(receiverKey) || 0);
+    const newReceiverBalance = receiverBalance + amt;
+
+    localStorage.setItem(receiverKey, String(newReceiverBalance));
+
+    // broadcast untuk penerima
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: { publicKey: to, balance: newReceiverBalance },
+      })
+    );
+
+    // ----------------------------
+    // 3) Simulasi signature dan tx
+    // ----------------------------
+    const message = Buffer.from(`${wallet.publicKey}:${to}:${amount}`);
     const signature = nacl.sign.detached(
       message,
       Buffer.from(wallet.secretKey, "hex")
     );
 
-    // Simulate backend broadcast
-    await sendTokens(
-      wallet.publicKey,
+    setTx({
+      from: wallet.publicKey,
       to,
-      String(amt),
-      Buffer.from(signature).toString("hex")
-    );
+      amount: amt,
+      signature: Buffer.from(signature).toString("hex"),
+    });
 
-    // =====================
-    // 2) UPDATE BALANCE SENDER
-    // =====================
-    const keySender = "balance_" + wallet.publicKey;
-    const senderBalance = Number(localStorage.getItem(keySender) || 0);
-
-    const updatedSender = senderBalance - amt;
-    localStorage.setItem(keySender, String(updatedSender));
-
-    // broadcast update
-    window.dispatchEvent(
-      new CustomEvent("balance:update", {
-        detail: { publicKey: wallet.publicKey, balance: updatedSender },
-      })
-    );
-
-    // =====================
-    // 3) UPDATE BALANCE RECEIVER
-    // =====================
-    const keyReceiver = "balance_" + to;
-    const receiverBalance = Number(localStorage.getItem(keyReceiver) || 0);
-
-    const updatedReceiver = receiverBalance + amt;
-    localStorage.setItem(keyReceiver, String(updatedReceiver));
-
-    // broadcast update (untuk halaman penerima kalau dibuka)
-    window.dispatchEvent(
-      new CustomEvent("balance:update", {
-        detail: { publicKey: to, balance: updatedReceiver },
-      })
-    );
-
-    // =====================
-    // DONE
-    // =====================
-    setTx({ to, amount: amt });
     alert("Token sent!");
   };
 
@@ -104,7 +103,7 @@ export default function SendTokenForm({ wallet }: { wallet: any }) {
 
       {tx && (
         <div className="mt-3 p-3 bg-green-100 border border-green-300 rounded-lg text-sm">
-          ✅ Sent {tx.amount} tokens to {tx.to}
+          ✅ Transaction simulated!
         </div>
       )}
     </div>
