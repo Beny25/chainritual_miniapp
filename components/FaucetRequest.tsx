@@ -1,59 +1,55 @@
 "use client";
 
 import { useState } from "react";
-import { fetchBalance } from "../lib/balance"; // pastikan path sesuai
+import WalletBalance from "./WalletBalance";
 
-interface FaucetRequestProps {
-  publicKey: string;
-  reloadBalance?: () => void; // optional
-}
-
-export default function FaucetRequest({ publicKey, reloadBalance }: FaucetRequestProps) {
+export default function FaucetRequest({ publicKey }: { publicKey: string }) {
   const [loading, setLoading] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [refreshSignal, setRefreshSignal] = useState(0);
 
   const handleRequest = async () => {
     setLoading(true);
+    setMessage(null);
 
-    // Simulate faucet
-    setTimeout(() => {
-      const key = "balance_" + publicKey;
-      const current = Number(localStorage.getItem(key) || 0);
-      const updated = current + 100; // tambah 100 token
+    try {
+      const res = await fetch("/api/faucet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicKey }),
+      });
 
-      localStorage.setItem(key, String(updated));
+      const data = await res.json();
 
-      // broadcast ke WalletBalance
-      window.dispatchEvent(
-        new CustomEvent("balance:update", {
-          detail: { publicKey, balance: updated },
-        })
-      );
+      if (data.success) {
+        setMessage("Tokens requested successfully!");
+        setRefreshSignal(prev => prev + 1); // trigger WalletBalance refresh
+      } else {
+        setMessage("Faucet request failed: " + (data.error || "Unknown error"));
+      }
+    } catch (err: any) {
+      setMessage("Error: " + err.message);
+    }
 
-      // panggil reloadBalance dari parent kalau ada
-      if (reloadBalance) reloadBalance();
-
-      setShowPopup(true);
-      setLoading(false);
-
-      setTimeout(() => setShowPopup(false), 1200);
-    }, 600);
+    setLoading(false);
   };
 
   return (
-    <div className="p-4 border rounded-xl bg-white mt-4 relative">
+    <div className="p-4 border rounded-xl bg-white mt-4 shadow-sm max-w-md">
+      <WalletBalance publicKey={publicKey} refreshSignal={refreshSignal} />
+
       <button
         onClick={handleRequest}
         disabled={loading}
-        className="px-4 py-2 bg-purple-600 text-white rounded-lg"
+        className="mt-2 px-4 py-2 bg-purple-600 text-white rounded-lg"
       >
         {loading ? "Requesting..." : "Request Testnet Tokens"}
       </button>
 
-      {showPopup && (
-        <div className="absolute top-full left-0 mt-2 bg-green-500 text-white px-3 py-2 rounded-lg shadow">
-          +100 tokens added!
-        </div>
+      {message && (
+        <p className={`mt-2 text-sm ${message.includes("success") ? "text-green-600" : "text-red-600"}`}>
+          {message}
+        </p>
       )}
     </div>
   );
