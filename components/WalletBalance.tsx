@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getBalance } from "@/lib/linera";
 
 interface WalletBalanceProps {
   publicKey: string;
@@ -9,15 +8,24 @@ interface WalletBalanceProps {
 }
 
 export default function WalletBalance({ publicKey, refreshSignal }: WalletBalanceProps) {
-  const [balance, setBalance] = useState<any>("Loading...");
+  const [balance, setBalance] = useState<number | null>(null);
 
   const fetchBalance = async () => {
     try {
-      const data = await getBalance(publicKey);
-      // tampilkan full response dari node
-      setBalance(data ?? "No data");
-    } catch (err: any) {
-      setBalance("Error fetching balance: " + err.message);
+      const res = await fetch("/api/balance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicKey }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setBalance(data.balance);
+      } else {
+        setBalance(0); // fallback kalau error
+      }
+    } catch {
+      setBalance(0); // fallback kalau fetch gagal
     }
   };
 
@@ -29,8 +37,7 @@ export default function WalletBalance({ publicKey, refreshSignal }: WalletBalanc
 
   return (
     <div className="p-4 border rounded-xl bg-white mt-4">
-      <b>Balance debug:</b>
-      <pre className="text-sm mt-1">{JSON.stringify(balance, null, 2)}</pre>
+      <b>Balance:</b> {balance !== null ? balance : "Loading..."} tokens
     </div>
   );
 }
