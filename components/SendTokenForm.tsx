@@ -1,56 +1,70 @@
 "use client";
-
 import { useState } from "react";
-import nacl from "tweetnacl";
+import { sendTokens } from "@/lib/linera";
 
 export default function SendTokenForm({ wallet }: { wallet: any }) {
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
 
-  const handleSend = () => {
+  const send = async (e: any) => {
+    e.preventDefault();
+
     const amt = Number(amount);
 
-    if (!to || to.length < 10) return alert("Public key tidak valid!");
-    if (amt <= 0) return alert("Amount tidak valid!");
+    // 1. Panggil API dummy (optional, cuma untuk txId)
+    await sendTokens(wallet.publicKey, to, amount, "dummy-signature");
 
-    const senderKey = "balance_" + wallet.publicKey;
-    const receiverKey = "balance_" + to;
+    // 2. UPDATE dummy localStorage
+    const fromKey = "balance_" + wallet.publicKey;
+    const toKey = "balance_" + to;
 
-    const sender = Number(localStorage.getItem(senderKey) || 0);
-    const receiver = Number(localStorage.getItem(receiverKey) || 0);
+    const fromBalance = Number(localStorage.getItem(fromKey) || 0);
+    const toBalance = Number(localStorage.getItem(toKey) || 0);
 
-    if (sender < amt) return alert("Balance tidak cukup!");
+    const newFrom = fromBalance - amt;
+    const newTo = toBalance + amt;
 
-    // update
-    localStorage.setItem(senderKey, String(sender - amt));
-    localStorage.setItem(receiverKey, String(receiver + amt));
+    // Simpan
+    localStorage.setItem(fromKey, newFrom.toString());
+    localStorage.setItem(toKey, newTo.toString());
 
-    // broadcast (global)
-    window.dispatchEvent(new CustomEvent("balance:update"));
+    // Broadcast event (pengirim)
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: { publicKey: wallet.publicKey, balance: newFrom },
+      })
+    );
 
-    alert("Sent!");
+    // Broadcast event (penerima)
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: { publicKey: to, balance: newTo },
+      })
+    );
+
+    setTo("");
+    setAmount("");
   };
 
   return (
-    <div className="p-4 border rounded-xl bg-white mt-4">
+    <form onSubmit={send} className="space-y-3">
       <input
-        className="border p-2 w-full mb-2"
-        placeholder="Recipient"
+        className="border p-2 w-full"
+        placeholder="Recipient Public Key"
         value={to}
         onChange={(e) => setTo(e.target.value)}
       />
 
       <input
-        className="border p-2 w-full mb-2"
+        className="border p-2 w-full"
         placeholder="Amount"
-        type="number"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
       />
 
-      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg" onClick={handleSend}>
-        Send
+      <button className="bg-black text-white p-2 rounded w-full">
+        Send Tokens
       </button>
-    </div>
+    </form>
   );
 }
