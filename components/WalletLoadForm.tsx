@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { loadWalletFromSecretKey, saveWalletToLocal } from "@/lib/wallet";
+import { loadWalletFromSecretKey, saveWalletToLocal } from "@/lib/wallet.client";
 
 export default function WalletLoadForm({ setWallet }: { setWallet: (wallet: any) => void }) {
   const [secretKey, setSecretKey] = useState("");
