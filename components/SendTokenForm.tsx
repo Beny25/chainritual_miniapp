@@ -2,20 +2,20 @@
 
 import { useState } from "react";
 import nacl from "tweetnacl";
-import { sendTokens } from "@/lib/linera";
 
 export default function SendTokenForm({
   wallet,
-  reloadBalance, // ⬅️ tambahin prop
+  reloadBalance,
 }: {
   wallet: any;
-  reloadBalance: () => void; // tipe function
+  reloadBalance?: () => void;
 }) {
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [tx, setTx] = useState<any>(null);
 
   const handleSend = async () => {
+    // Validasi input
     if (!to || to.length < 10) {
       alert("Recipient public key tidak valid!");
       return;
@@ -26,24 +26,51 @@ export default function SendTokenForm({
       return;
     }
 
-    const message = Buffer.from(`${wallet.publicKey}:${to}:${amount}`);
+    const amountNumber = Number(amount);
+
+    // Buat signature
+    const message = Buffer.from(`${wallet.publicKey}:${to}:${amountNumber}`);
     const signature = nacl.sign.detached(
       message,
       Buffer.from(wallet.secretKey, "hex")
     );
+    const signatureHex = Buffer.from(signature).toString("hex");
 
-    const res = await sendTokens(
-    wallet.publicKey,
-    to,
-    amount, // tetap string
-    Buffer.from(signature).toString("hex")
-  );
+    // Simulasi sendTokens (update localStorage)
+    const fromKey = "balance_" + wallet.publicKey;
+    const toKey = "balance_" + to;
 
+    const fromCurrent = Number(localStorage.getItem(fromKey) || 0);
+    if (fromCurrent < amountNumber) {
+      alert("Insufficient balance!");
+      return;
+    }
 
-    setTx(res);
-    alert("Token sent successfully!");
+    const toCurrent = Number(localStorage.getItem(toKey) || 0);
 
-    // ⬅️ reload balance biar WalletBalance update
+    // Update saldo
+    const fromUpdated = fromCurrent - amountNumber;
+    const toUpdated = toCurrent + amountNumber;
+
+    localStorage.setItem(fromKey, String(fromUpdated));
+    localStorage.setItem(toKey, String(toUpdated));
+
+    // Broadcast event ke WalletBalance
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: { publicKey: wallet.publicKey, balance: fromUpdated },
+      })
+    );
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: { publicKey: to, balance: toUpdated },
+      })
+    );
+
+    setTx({ success: true });
+    alert(`✅ ${amountNumber} tokens sent to ${to}!`);
+
+    // Reload balance parent kalau ada
     if (reloadBalance) reloadBalance();
   };
 
