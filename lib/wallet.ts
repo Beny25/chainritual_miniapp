@@ -1,20 +1,36 @@
 import nacl from "tweetnacl";
 
-const STORAGE_KEY = "linera_wallets";
-const CURRENT_KEY = "linera_current_wallet";
+const STORAGE_KEY = "linera_wallet";
+const WALLETS_KEY = "linera_all_wallets";
 
-// Buat wallet baru
-export function generateWallet() {
+// Create a new wallet
+export function createWallet() {
   const keyPair = nacl.sign.keyPair();
+
   const wallet = {
     publicKey: Buffer.from(keyPair.publicKey).toString("hex"),
     secretKey: Buffer.from(keyPair.secretKey).toString("hex"),
   };
-  saveWalletToLocal(wallet);
+
+  saveWallet(wallet);
   return wallet;
 }
 
-// Download wallet JSON
+// Save wallet to localStorage and update list
+export function saveWallet(wallet: any) {
+  // Save as current
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
+
+  // Save in list
+  const all = getAllWallets();
+  const exists = all.find((w) => w.publicKey === wallet.publicKey);
+  if (!exists) {
+    all.push(wallet);
+    localStorage.setItem(WALLETS_KEY, JSON.stringify(all));
+  }
+}
+
+// Download wallet as file
 export function downloadWallet(wallet: any) {
   const blob = new Blob([JSON.stringify(wallet, null, 2)], {
     type: "application/json",
@@ -22,76 +38,65 @@ export function downloadWallet(wallet: any) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `wallet_${wallet.publicKey}.json`;
+  a.download = "linera-wallet.json";
   a.click();
 }
 
-// Load dari file
+// Load wallet from uploaded file
 export async function loadWallet(file: File) {
   const text = await file.text();
   const wallet = JSON.parse(text);
-  saveWalletToLocal(wallet);
+  saveWallet(wallet);
   return wallet;
 }
 
-// Load dari secret key
+// Load wallet from secret key hex
 export async function loadWalletFromSecretKey(secretKeyHex: string) {
   const secretKey = Uint8Array.from(
-    secretKeyHex.match(/.{1,2}/g)!.map((b) => parseInt(b, 16))
+    secretKeyHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
   );
+
   if (secretKey.length !== nacl.sign.secretKeyLength) {
     throw new Error("Invalid secret key length");
   }
+
   const keyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
+
   const wallet = {
     publicKey: Buffer.from(keyPair.publicKey).toString("hex"),
     secretKey: secretKeyHex,
   };
-  saveWalletToLocal(wallet);
+
+  saveWallet(wallet);
   return wallet;
 }
 
-// =============================
-// Multiple Wallet Management
-// =============================
-
-export function getAllWallets(): any[] {
-  if (typeof window === "undefined") return [];
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
-}
-
-export function saveWalletToLocal(wallet: any) {
-  const wallets = getAllWallets();
-  const exists = wallets.find((w) => w.publicKey === wallet.publicKey);
-  if (!exists) wallets.push(wallet);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(wallets));
-  localStorage.setItem(CURRENT_KEY, wallet.publicKey);
-}
-
+// Get current active wallet
 export function getWalletFromLocal(): any | null {
-  const pubKey = localStorage.getItem(CURRENT_KEY);
-  if (!pubKey) return null;
-  const wallets = getAllWallets();
-  return wallets.find((w) => w.publicKey === pubKey) || null;
+  const w = localStorage.getItem(STORAGE_KEY);
+  if (!w) return null;
+  return JSON.parse(w);
 }
 
-export function switchWallet(wallet: any) {
-  localStorage.setItem(CURRENT_KEY, wallet.publicKey);
+// Get all saved wallets
+export function getAllWallets(): any[] {
+  const list = localStorage.getItem(WALLETS_KEY);
+  if (!list) return [];
+  return JSON.parse(list);
 }
 
-export function deleteWallet(pubKey: string) {
-  let wallets = getAllWallets();
-  wallets = wallets.filter((w) => w.publicKey !== pubKey);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(wallets));
+// Delete wallet by publicKey
+export function deleteWallet(publicKey: string) {
+  const all = getAllWallets().filter((w) => w.publicKey !== publicKey);
+  localStorage.setItem(WALLETS_KEY, JSON.stringify(all));
 
-  const current = localStorage.getItem(CURRENT_KEY);
-  if (current === pubKey) {
-    localStorage.removeItem(CURRENT_KEY);
+  const current = getWalletFromLocal();
+  if (current?.publicKey === publicKey) {
+    localStorage.removeItem(STORAGE_KEY);
   }
 }
 
-export function clearAllWallets() {
+// Clear current wallet
+export function clearWallet() {
   localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(CURRENT_KEY);
 }
