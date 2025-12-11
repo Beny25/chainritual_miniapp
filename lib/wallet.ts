@@ -1,5 +1,3 @@
-"use client";
-
 import nacl from "tweetnacl";
 
 const STORAGE_KEY = "linera_wallet";
@@ -17,8 +15,6 @@ export function generateWallet() {
 }
 
 export function downloadWallet(wallet: any) {
-  if (typeof window === "undefined") return;
-
   const blob = new Blob([JSON.stringify(wallet, null, 2)], {
     type: "application/json",
   });
@@ -37,6 +33,7 @@ export async function loadWallet(file: File) {
 }
 
 export async function loadWalletFromSecretKey(secretKeyHex: string) {
+  // convert hex string to Uint8Array
   const secretKey = Uint8Array.from(
     secretKeyHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
   );
@@ -45,6 +42,7 @@ export async function loadWalletFromSecretKey(secretKeyHex: string) {
     throw new Error("Invalid secret key length");
   }
 
+  // generate public key from secret key
   const keyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
 
   return {
@@ -53,23 +51,17 @@ export async function loadWalletFromSecretKey(secretKeyHex: string) {
   };
 }
 
-// =========================
-// LOCAL STORAGE WRAPPERS
-// =========================
-
+// ----- LOCAL STORAGE -----
 export function saveWalletToLocal(wallet: any) {
-  if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
 }
 
 export function getWalletFromLocal(): any | null {
-  if (typeof window === "undefined") return null;
   const w = localStorage.getItem(STORAGE_KEY);
   if (!w) return null;
   return JSON.parse(w);
 }
 
 export function clearWallet() {
-  if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
 }
