@@ -16,26 +16,27 @@ export default function SendTokenForm({
   const [tx, setTx] = useState<any>(null);
 
   const handleSend = async () => {
-    // -------------------- VALIDASI PUBLIC KEY --------------------
-    if (!/^[0-9a-fA-F]{64}$/.test(to)) {
-      alert("Recipient public key tidak valid! (64 karakter hex)");
+    // ================ VALIDASI PUBLIC KEY ================
+    if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
+      alert("Recipient public key harus 64 karakter (hex)!");
       return;
     }
 
-    // -------------------- VALIDASI AMOUNT --------------------
+    // ================ VALIDASI AMOUNT ================
     const amt = Number(amount);
-    if (isNaN(amt) || amt <= 0) {
-      alert("Amount harus > 0");
+    if (!amount || isNaN(amt) || amt <= 0) {
+      alert("Amount harus angka > 0!");
       return;
     }
 
-    // -------------------- SIGN MESSAGE --------------------
+    // ================ SIGN MESSAGE ================
     const message = Buffer.from(`${wallet.publicKey}:${to}:${amt}`);
     const signature = nacl.sign.detached(
       message,
       Buffer.from(wallet.secretKey, "hex")
     );
 
+    // Kirim dummy API (tidak mengubah apa2)
     const res = await sendTokens(
       wallet.publicKey,
       to,
@@ -43,31 +44,40 @@ export default function SendTokenForm({
       Buffer.from(signature).toString("hex")
     );
 
-    // -------------------- UPDATE BALANCE LOCALLY --------------------
-    const fromKey = "balance_" + wallet.publicKey;
-    const toKey = "balance_" + to;
+    // ================ UPDATE BALANCE LOCALLY ================
+    const senderKey = "balance_" + wallet.publicKey;
+    const receiverKey = "balance_" + to;
 
-    const senderBalance = Number(localStorage.getItem(fromKey) || 0);
-    localStorage.setItem(fromKey, String(senderBalance - amt));
+    const senderBalance = Number(localStorage.getItem(senderKey) || 0);
+    const receiverBalance = Number(localStorage.getItem(receiverKey) || 0);
 
-    const receiverBalance = Number(localStorage.getItem(toKey) || 0);
-    localStorage.setItem(toKey, String(receiverBalance + amt));
+    // sender berkurang
+    localStorage.setItem(senderKey, String(senderBalance - amt));
 
-    // Trigger event buat update UI
+    // receiver nambah
+    localStorage.setItem(receiverKey, String(receiverBalance + amt));
+
+    // ================ BROADCAST EVENT KE UI ================
     window.dispatchEvent(
       new CustomEvent("balance:update", {
-        detail: { publicKey: wallet.publicKey, balance: senderBalance - amt },
+        detail: {
+          publicKey: wallet.publicKey,
+          balance: senderBalance - amt,
+        },
       })
     );
 
     window.dispatchEvent(
       new CustomEvent("balance:update", {
-        detail: { publicKey: to, balance: receiverBalance + amt },
+        detail: {
+          publicKey: to,
+          balance: receiverBalance + amt,
+        },
       })
     );
 
+    reloadBalance(); // refresh komponen sendiri
     setTx(res);
-    reloadBalance();
     alert("Token sent successfully!");
   };
 
@@ -77,14 +87,14 @@ export default function SendTokenForm({
         className="border p-2 w-full mb-2"
         placeholder="Recipient Public Key"
         value={to}
-        onChange={(e) => setTo(e.target.value)}
+        onChange={(e) => setTo(e.target.value.trim())}
       />
 
       <input
         className="border p-2 w-full mb-2"
         placeholder="Amount"
         type="number"
-        min="0"
+        min="1"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
       />
