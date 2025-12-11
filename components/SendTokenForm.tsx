@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import nacl from "tweetnacl";
 import { sendTokens } from "@/lib/linera";
 
 export default function SendTokenForm({
@@ -15,88 +16,69 @@ export default function SendTokenForm({
   const [tx, setTx] = useState<any>(null);
 
   const handleSend = async () => {
-    // ========= VALIDASI PUBLIC KEY =========
+    // ================ VALIDASI PUBLIC KEY ================
     if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
-      alert("Recipient public key harus 64 karakter hex!");
+      alert("Recipient public key harus 64 karakter (hex)!");
       return;
     }
 
-    // ========= VALIDASI AMOUNT =========
+    // ================ VALIDASI AMOUNT ================
     const amt = Number(amount);
     if (!amount || isNaN(amt) || amt <= 0) {
       alert("Amount harus angka > 0!");
       return;
     }
 
-    // ========= API CALL =========
-    const res = await fetch("/api/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: wallet.publicKey,
-        to,
-        amount: amt,
-        signature: wallet.secretKey, // dummy
-      }),
-    });
+    // ================ SIGN MESSAGE ================
+    const message = Buffer.from(`${wallet.publicKey}:${to}:${amt}`);
+    const signature = nacl.sign.detached(
+      message,
+      Buffer.from(wallet.secretKey, "hex")
+    );
 
-    const data = await res.json();
+    // Kirim dummy API (tidak mengubah apa2)
+    const res = await sendTokens(
+      wallet.publicKey,
+      to,
+      String(amt),
+      Buffer.from(signature).toString("hex")
+    );
 
-    if (!res.ok) {
-      alert(data.error || "Send failed");
-      return;
-    }
+    // ================ UPDATE BALANCE LOCALLY ================
+    const senderKey = "balance_" + wallet.publicKey;
+    const receiverKey = "balance_" + to;
 
-    alert("Success! TxID: " + data.txId);
+    const senderBalance = Number(localStorage.getItem(senderKey) || 0);
+    const receiverBalance = Number(localStorage.getItem(receiverKey) || 0);
 
-    // ==========================================================
-    //  LOCALSTORAGE — HANYA JALAN DI CLIENT
-    // ==========================================================
-    if (typeof window !== "undefined") {
-      const senderKey = "balance_" + wallet.publicKey;
-      const receiverKey = "balance_" + to;
+    // sender berkurang
+    localStorage.setItem(senderKey, String(senderBalance - amt));
 
-      const senderBalance = Number(localStorage.getItem(senderKey) || 0);
-      const receiverBalance = Number(localStorage.getItem(receiverKey) || 0);
+    // receiver nambah
+    localStorage.setItem(receiverKey, String(receiverBalance + amt));
 
-      const newSender = senderBalance - amt;
-      const newReceiver = receiverBalance + amt;
+    // ================ BROADCAST EVENT KE UI ================
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: {
+          publicKey: wallet.publicKey,
+          balance: senderBalance - amt,
+        },
+      })
+    );
 
-      localStorage.setItem(senderKey, String(newSender));
-      localStorage.setItem(receiverKey, String(newReceiver));
+    window.dispatchEvent(
+      new CustomEvent("balance:update", {
+        detail: {
+          publicKey: to,
+          balance: receiverBalance + amt,
+        },
+      })
+    );
 
-      // Broadcast ke UI
-      window.dispatchEvent(
-        new CustomEvent("balance:update", {
-          detail: { publicKey: wallet.publicKey, balance: newSender },
-        })
-      );
-
-      window.dispatchEvent(
-        new CustomEvent("balance:update", {
-          detail: { publicKey: to, balance: newReceiver },
-        })
-      );
-
-      // Simpan history
-      const histKey = "history_" + wallet.publicKey;
-      const prev = JSON.parse(localStorage.getItem(histKey) || "[]");
-
-      const txRecord = {
-        txId: data.txId,
-        to,
-        amount: amt,
-        direction: "sent",
-        timestamp: Date.now(),
-      };
-
-      localStorage.setItem(histKey, JSON.stringify([txRecord, ...prev]));
-    }
-
-    reloadBalance();
-    setTx(data);
-    setTo("");
-    setAmount("");
+    reloadBalance(); // refresh komponen sendiri
+    setTx(res);
+    alert("Token sent successfully!");
   };
 
   return (
@@ -131,4 +113,4 @@ export default function SendTokenForm({
       )}
     </div>
   );
-}
+    }
