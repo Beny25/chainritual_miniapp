@@ -16,33 +16,33 @@ export default function SendTokenForm({
   const [tx, setTx] = useState<any>(null);
 
   const handleSend = async () => {
-    // ================ VALIDASI PUBLIC KEY ================
-    if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
-      alert("Recipient public key harus 64 karakter (hex)!");
-      return;
-    }
+  // ================ VALIDASI PUBLIC KEY ================
+  if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
+    alert("Recipient public key harus 64 karakter (hex)!");
+    return;
+  }
 
-    // ================ VALIDASI AMOUNT ================
-    const amt = Number(amount);
-    if (!amount || isNaN(amt) || amt <= 0) {
-      alert("Amount harus angka > 0!");
-      return;
-    }
+  // ================ VALIDASI AMOUNT ================
+  const amt = Number(amount);
+  if (!amount || isNaN(amt) || amt <= 0) {
+    alert("Amount harus angka > 0!");
+    return;
+  }
 
-    // ================ SIGN MESSAGE ================
-    const message = Buffer.from(`${wallet.publicKey}:${to}:${amt}`);
-    const signature = nacl.sign.detached(
-      message,
-      Buffer.from(wallet.secretKey, "hex")
-    );
+  // ================ SIGN MESSAGE ================
+  const message = Buffer.from(`${wallet.publicKey}:${to}:${amt}`);
+  const signature = nacl.sign.detached(
+    message,
+    Buffer.from(wallet.secretKey, "hex")
+  );
 
-    // Kirim dummy API (tidak mengubah apa2)
-    const res = await sendTokens(
-      wallet.publicKey,
-      to,
-      String(amt),
-      Buffer.from(signature).toString("hex")
-    );
+  const res = await sendTokens(
+    wallet.publicKey,
+    to,
+    String(amt),
+    Buffer.from(signature).toString("hex")
+  );
+};
 
     // ================ UPDATE BALANCE LOCALLY ================
     const senderKey = "balance_" + wallet.publicKey;
