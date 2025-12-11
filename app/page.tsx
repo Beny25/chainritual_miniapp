@@ -21,7 +21,7 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-4 space-y-6">
+    <div className="max-w-md mx-auto mt-2 p-4 space-y-6">
       <HeaderBanner />
 
       {!wallet && (
