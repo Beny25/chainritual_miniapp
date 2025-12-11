@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { fetchBalance } from "../lib/balance"; // pastikan path sesuai
 
-export default function FaucetRequest({ publicKey }: { publicKey: string }) {
+interface FaucetRequestProps {
+  publicKey: string;
+  reloadBalance?: () => void; // optional
+}
+
+export default function FaucetRequest({ publicKey, reloadBalance }: FaucetRequestProps) {
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
 
@@ -13,7 +19,7 @@ export default function FaucetRequest({ publicKey }: { publicKey: string }) {
     setTimeout(() => {
       const key = "balance_" + publicKey;
       const current = Number(localStorage.getItem(key) || 0);
-      const updated = current + 100; // nambah 100 token
+      const updated = current + 100; // tambah 100 token
 
       localStorage.setItem(key, String(updated));
 
@@ -23,6 +29,9 @@ export default function FaucetRequest({ publicKey }: { publicKey: string }) {
           detail: { publicKey, balance: updated },
         })
       );
+
+      // panggil reloadBalance dari parent kalau ada
+      if (reloadBalance) reloadBalance();
 
       setShowPopup(true);
       setLoading(false);
@@ -48,4 +57,4 @@ export default function FaucetRequest({ publicKey }: { publicKey: string }) {
       )}
     </div>
   );
-      }
+}
