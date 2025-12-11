@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { safeStorage } from "@/lib/safeStorage";
+import { sendTokens } from "@/lib/linera";
 
 export default function SendTokenForm({
   wallet,
@@ -14,20 +16,20 @@ export default function SendTokenForm({
   const [tx, setTx] = useState<any>(null);
 
   const handleSend = async () => {
-    // ========= VALIDASI PUBLIC KEY =========
+    // ---------------- VALIDASI PUBLIC KEY ----------------
     if (!to || !/^[0-9a-fA-F]{64}$/.test(to)) {
       alert("Recipient public key harus 64 karakter hex!");
       return;
     }
 
-    // ========= VALIDASI AMOUNT =========
+    // ---------------- VALIDASI AMOUNT ----------------
     const amt = Number(amount);
     if (!amount || isNaN(amt) || amt <= 0) {
       alert("Amount harus angka > 0!");
       return;
     }
 
-    // ========= KIRIM KE BACKEND =========
+    // ---------------- CALL API (dummy / real) ----------------
     const res = await fetch("/api/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -35,7 +37,7 @@ export default function SendTokenForm({
         from: wallet.publicKey,
         to,
         amount: amt,
-        signature: wallet.secretKey,
+        signature: wallet.secretKey, // dummy
       }),
     });
 
@@ -47,46 +49,64 @@ export default function SendTokenForm({
 
     alert("Success! TxID: " + data.txId);
 
-    // ========= UPDATE BALANCE (BROWSER ONLY) =========
+    // ---------------- UPDATE BALANCE LOCALLY ----------------
+    const senderKey = "balance_" + wallet.publicKey;
+    const receiverKey = "balance_" + to;
+
+    const senderBalance = Number(safeStorage.get(senderKey) || 0);
+    const receiverBalance = Number(safeStorage.get(receiverKey) || 0);
+
+    const newSenderBalance = senderBalance - amt;
+    const newReceiverBalance = receiverBalance + amt;
+
+    safeStorage.set(senderKey, String(newSenderBalance));
+    safeStorage.set(receiverKey, String(newReceiverBalance));
+
+    // ---------------- BROADCAST EVENT KE UI ----------------
     if (typeof window !== "undefined") {
-      const senderKey = "balance_" + wallet.publicKey;
-      const receiverKey = "balance_" + to;
-
-      const senderBalance = Number(localStorage.getItem(senderKey) || 0);
-      const receiverBalance = Number(localStorage.getItem(receiverKey) || 0);
-
-      localStorage.setItem(senderKey, String(senderBalance - amt));
-      localStorage.setItem(receiverKey, String(receiverBalance + amt));
-
-      // broadcast update sender
+      // sender update
       window.dispatchEvent(
         new CustomEvent("balance:update", {
           detail: {
             publicKey: wallet.publicKey,
-            balance: senderBalance - amt,
+            balance: newSenderBalance,
           },
         })
       );
 
-      // ========= SAVE HISTORY =========
-      const histKey = "history_" + wallet.publicKey;
-      const prev = JSON.parse(localStorage.getItem(histKey) || "[]");
-
-      const newTx = {
-        txId: data.txId,
-        to,
-        amount: amt,
-        direction: "sent",
-        timestamp: Date.now(),
-      };
-
-      localStorage.setItem(histKey, JSON.stringify([newTx, ...prev]));
+      // receiver update
+      window.dispatchEvent(
+        new CustomEvent("balance:update", {
+          detail: {
+            publicKey: to,
+            balance: newReceiverBalance,
+          },
+        })
+      );
     }
 
+    // ---------------- SAVE HISTORY ----------------
+    const histKey = "history_" + wallet.publicKey;
+    const prev = JSON.parse(safeStorage.get(histKey) || "[]");
+
+    const newTx = {
+      txId: data.txId,
+      to,
+      amount: amt,
+      direction: "sent",
+      timestamp: Date.now(),
+    };
+
+    safeStorage.set(histKey, JSON.stringify([newTx, ...prev]));
+
+    // Refresh balance komponen
     reloadBalance();
-    setTx(data);
-    setAmount("");
+
+    setTx(newTx);
+
+    // Reset input
     setTo("");
+    setAmount("");
   };
 
   return (
@@ -116,7 +136,7 @@ export default function SendTokenForm({
 
       {tx && (
         <div className="mt-3 p-3 bg-green-100 border border-green-300 rounded-lg text-sm">
-          ✅ Transaction sent!
+          ✅ Transaction sent! (TxID: {tx.txId})
         </div>
       )}
     </div>
