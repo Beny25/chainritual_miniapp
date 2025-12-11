@@ -1,3 +1,5 @@
+"use client";
+
 import nacl from "tweetnacl";
 
 const STORAGE_KEY = "linera_wallet";
@@ -52,22 +54,22 @@ export async function loadWalletFromSecretKey(secretKeyHex: string) {
 }
 
 // =========================
-//  LOCAL STORAGE SAFE WRAP
+// LOCAL STORAGE WRAPPERS
 // =========================
 
 export function saveWalletToLocal(wallet: any) {
-  if (typeof window === "undefined") return; // <-- FIX WAJIB
+  if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
 }
 
 export function getWalletFromLocal(): any | null {
-  if (typeof window === "undefined") return null; // <-- FIX WAJIB
+  if (typeof window === "undefined") return null;
   const w = localStorage.getItem(STORAGE_KEY);
   if (!w) return null;
   return JSON.parse(w);
 }
 
 export function clearWallet() {
-  if (typeof window === "undefined") return; // <-- FIX WAJIB
+  if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
 }
