@@ -1,107 +1,91 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  createWallet,
+  generateWallet,
   downloadWallet,
-  getWalletFromLocal,
   loadWallet,
-  loadWalletFromSecretKey,
-  getAllWallets,
-  saveWallet,
-  deleteWallet,
+  getWalletFromLocal,
+  saveWalletToLocal,
+  clearWallet,
 } from "@/lib/wallet";
 
-export default function WalletManager({ wallet, setWallet }: any) {
-  const [allWallets, setAllWallets] = useState<any[]>([]);
+export default function WalletManager({ setWallet }: { setWallet: (w: any) => void }) {
+  const [wallet, setLocalWallet] = useState<any>(null);
 
-  const refreshWallets = () => {
-    setAllWallets(getAllWallets());
-  };
+  useEffect(() => {
+    const w = getWalletFromLocal();
+    if (w) setLocalWallet(w);
+  }, []);
 
   const handleCreate = () => {
-    const newWallet = createWallet();
-    setWallet(newWallet);
-    refreshWallets();
+    const w = generateWallet();
+    setLocalWallet(w);
+    setWallet(w);
   };
 
   const handleLoad = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
-    const w = await loadWallet(e.target.files[0]);
-    setWallet(w);
-    refreshWallets();
-  };
-
-  const handleSelect = (pubKey: string) => {
-    const found = allWallets.find((w) => w.publicKey === pubKey);
-    if (found) {
-      saveWallet(found);
-      setWallet(found);
+    if (!e.target.files) return;
+    try {
+      const w = await loadWallet(e.target.files[0]);
+      setLocalWallet(w);
+      setWallet(w);
+    } catch (err) {
+      alert("Failed to load wallet");
     }
   };
 
-  const handleDelete = (pubKey: string) => {
-    deleteWallet(pubKey);
-    const current = getWalletFromLocal();
-    setWallet(current);
-    refreshWallets();
+  const handleBackup = () => {
+    if (!wallet) return;
+    downloadWallet(wallet);
   };
 
-  useEffect(() => {
-    refreshWallets();
-  }, []);
+  const handleDelete = () => {
+    clearWallet();
+    setLocalWallet(null);
+    setWallet(null);
+  };
 
   return (
-    <div className="space-y-3 text-sm">
+    <div className="p-4 bg-white rounded-xl shadow space-y-4 max-w-md mx-auto">
       <div className="flex gap-2">
-        <button onClick={handleCreate} className="bg-blue-500 text-white px-3 py-1 rounded">
+        <button onClick={handleCreate} className="px-3 py-1 bg-blue-600 text-white rounded">
           Create Wallet
         </button>
 
-        <label className="bg-gray-300 text-black px-3 py-1 rounded cursor-pointer">
+        <label className="px-3 py-1 bg-gray-300 rounded cursor-pointer">
           Load Wallet
           <input type="file" accept=".json" onChange={handleLoad} className="hidden" />
         </label>
 
         {wallet && (
-          <button
-            onClick={() => downloadWallet(wallet)}
-            className="bg-green-500 text-white px-3 py-1 rounded"
-          >
-            Backup
-          </button>
+          <>
+            <button
+              onClick={handleBackup}
+              className="px-3 py-1 bg-green-600 text-white rounded"
+            >
+              Backup Wallet
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-3 py-1 bg-red-600 text-white rounded"
+            >
+              Delete Wallet
+            </button>
+          </>
         )}
       </div>
 
-      {allWallets.length > 0 && (
-        <div className="mt-2">
-          <div className="font-semibold mb-1">Saved Wallets:</div>
-          <ul className="space-y-1">
-            {allWallets.map((w) => (
-              <li
-                key={w.publicKey}
-                className="flex justify-between items-center bg-gray-100 p-2 rounded"
-              >
-                <span className="truncate">{w.publicKey.slice(0, 20)}...</span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => handleSelect(w.publicKey)}
-                    className="text-blue-500 text-xs"
-                  >
-                    Use
-                  </button>
-                  <button
-                    onClick={() => handleDelete(w.publicKey)}
-                    className="text-red-500 text-xs"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+      {wallet && (
+        <div>
+          <div className="font-semibold">Current Wallet Public Key:</div>
+          <div className="font-mono break-all p-2 bg-gray-100 rounded mt-1">
+            {wallet.publicKey}
+          </div>
         </div>
       )}
+
+      {!wallet && <div>No wallet loaded.</div>}
     </div>
   );
-            }
+}
