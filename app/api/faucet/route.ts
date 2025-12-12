@@ -1,32 +1,19 @@
+// app/api/faucet/route.ts
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  const { publicKey } = await req.json();
+  if (!publicKey) return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
+
   try {
-    const { publicKey } = await req.json();
-
-    if (!publicKey) {
-      return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
-    }
-
-    const FAUCET_URL = "https://faucet.testnet-conway.linera.net";
-
-    // Request ke faucet
-    const res = await fetch(FAUCET_URL, {
+    const res = await fetch("http://localhost:8080", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ public_key: publicKey }),
+      body: JSON.stringify({ owner: publicKey }), // faucet lokal pakai owner
     });
-
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = { raw: text || "Faucet request sent!" };
-    }
-
+    const data = await res.json();
     return NextResponse.json({ success: true, data });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
