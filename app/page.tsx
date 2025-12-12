@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import WalletManager from "@/components/WalletManager";
-import FaucetRequest from "@/components/FaucetRequest";
+import RequestChainButton from "@/components/RequestChainButton";
 import WalletBalance from "@/components/WalletBalance";
 import SendTokenForm from "@/components/SendTokenForm";
 import HeaderBanner from "@/components/HeaderBanner";
@@ -35,11 +35,11 @@ export default function Page() {
           </p>
 
           {/* Wallet Balance */}
-          <WalletBalance publicKey={wallet.publicKey} refreshSignal={reloadFlag} />
+          <WalletBalance wallet={wallet} />
 
           {/* Faucet Request */}
-          <FaucetRequest publicKey={wallet.publicKey} onRefresh={reloadBalance} />
-
+          <RequestChainButton wallet={wallet} setWallet={setWallet} />
+          
           {/* Send - coming soon */} 
           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full" onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
             > 
