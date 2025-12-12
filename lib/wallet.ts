@@ -5,21 +5,21 @@ const STORAGE_KEY = "linera_wallet";
 export type Wallet = {
   publicKey: string;
   secretKey: string;
-  chainId?: string; // optional, untuk chain request
+  chainId?: string; // optional
 };
 
+// ----- WALLET GENERATE -----
 export function generateWallet(): Wallet {
   const keyPair = nacl.sign.keyPair();
-
   const wallet: Wallet = {
     publicKey: Buffer.from(keyPair.publicKey).toString("hex"),
     secretKey: Buffer.from(keyPair.secretKey).toString("hex"),
   };
-
   saveWalletToLocal(wallet);
   return wallet;
 }
 
+// ----- DOWNLOAD JSON -----
 export function downloadWallet(wallet: Wallet) {
   const blob = new Blob([JSON.stringify(wallet, null, 2)], {
     type: "application/json",
@@ -29,27 +29,18 @@ export function downloadWallet(wallet: Wallet) {
   a.href = url;
   a.download = "linera-wallet.json";
   a.click();
+  URL.revokeObjectURL(url);
 }
 
-export async function loadWallet(input: File | string): Promise<Wallet> {
-  let wallet: Wallet;
-
-  if (typeof input === "string") {
-    // input berupa secret key
-    wallet = {
-      publicKey: derivePublicKeyFromSecret(input),
-      secretKey: input,
-    };
-  } else {
-    // input berupa File JSON
-    const text = await input.text();
-    wallet = JSON.parse(text);
-  }
-
+// ----- LOAD WALLET FROM FILE -----
+export async function loadWallet(file: File): Promise<Wallet> {
+  const text = await file.text();
+  const wallet: Wallet = JSON.parse(text);
   saveWalletToLocal(wallet);
   return wallet;
 }
 
+// ----- LOAD WALLET FROM SECRET KEY -----
 export async function loadWalletFromSecretKey(secretKeyHex: string): Promise<Wallet> {
   const secretKey = Uint8Array.from(
     secretKeyHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
@@ -61,10 +52,13 @@ export async function loadWalletFromSecretKey(secretKeyHex: string): Promise<Wal
 
   const keyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
 
-  return {
+  const wallet: Wallet = {
     publicKey: Buffer.from(keyPair.publicKey).toString("hex"),
     secretKey: secretKeyHex,
   };
+
+  saveWalletToLocal(wallet);
+  return wallet;
 }
 
 // ----- LOCAL STORAGE -----
