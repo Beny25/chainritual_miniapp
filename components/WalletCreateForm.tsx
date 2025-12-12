@@ -1,61 +1,55 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  generateWallet,
-  downloadWallet,
-  getWalletFromLocal,
-  saveWalletToLocal,
-} from "@/lib/wallet";
+import { generateWallet, downloadWallet, getWalletFromLocal, saveWalletToLocal, Wallet } from "@/lib/wallet";
 import { requestChain, queryBalance } from "@/lib/neynar";
 
-type WalletWithChain = {
-  publicKey: string;
-  secretKey: string;
-  chainId?: string;
-};
-
-export default function WalletCreateForm({
-  setWallet,
-}: {
-  setWallet: (wallet: WalletWithChain) => void;
-}) {
-  const [walletLocal, setLocalWallet] = useState<WalletWithChain | null>(null);
+export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: Wallet) => void }) {
+  const [wallet, setLocalWallet] = useState<Wallet | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Load wallet dari localStorage saat mount
+  // load wallet dari localStorage saat mount
   useEffect(() => {
-    const saved = getWalletFromLocal() as WalletWithChain | null;
+    const saved = getWalletFromLocal();
     if (saved) {
       setLocalWallet(saved);
-      setWallet(saved);
-      if (saved.chainId) {
-        queryBalance(saved.chainId).then(setBalance);
-      }
+      setWallet(saved); // update parent
+      if (saved.chainId) fetchBalance(saved.chainId);
     }
   }, [setWallet]);
+
+  // fetch balance
+  const fetchBalance = async (chainId: string) => {
+    try {
+      const b = await queryBalance(chainId);
+      setBalance(b);
+    } catch (err) {
+      console.error(err);
+      setBalance(null);
+    }
+  };
 
   const handleCreate = async () => {
     setLoading(true);
     try {
-      // 1️⃣ generate wallet
-      const w: WalletWithChain = generateWallet();
+      // 1️⃣ create wallet
+      const w = generateWallet();
 
       // 2️⃣ request chain dari backend / miniapp faucet
-      const { chainId } = await requestChain();
+      const chainId = await requestChain();
       w.chainId = chainId;
 
       // 3️⃣ simpan di localStorage & update state
       saveWalletToLocal(w);
-      setLocalWallet(w);
       setWallet(w);
+      setLocalWallet(w);
 
-      // 4️⃣ query balance otomatis
-      const bal = await queryBalance(chainId);
-      setBalance(bal);
-    } catch (err: any) {
-      alert("Error: " + err.message);
+      // 4️⃣ fetch balance
+      fetchBalance(chainId);
+    } catch (err) {
+      console.error("Failed to create wallet + request chain:", err);
+      alert("Gagal create wallet / request chain, cek console.");
     } finally {
       setLoading(false);
     }
@@ -65,27 +59,20 @@ export default function WalletCreateForm({
     <div className="p-4 border rounded-xl bg-white space-y-4">
       <button
         onClick={handleCreate}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg w-full"
         disabled={loading}
       >
-        {loading ? "Creating Wallet..." : "Create Wallet"}
+        {loading ? "Creating..." : "Create Wallet"}
       </button>
 
-      {walletLocal && (
+      {wallet && (
         <div className="space-y-2">
-          <p>
-            <b>Public Key:</b> {walletLocal.publicKey}
-          </p>
-          <p>
-            <b>Chain ID:</b> {walletLocal.chainId || "Pending..."}
-          </p>
-          <p>
-            <b>Balance:</b>{" "}
-            {balance !== null ? balance + " tokens" : "Loading..."}
-          </p>
+          <p><b>Public Key:</b> {wallet.publicKey}</p>
+          {wallet.chainId && <p><b>Chain ID:</b> {wallet.chainId}</p>}
+          <p><b>Balance:</b> {balance !== null ? balance : "Loading..."} tokens</p>
 
           <button
-            onClick={() => downloadWallet(walletLocal)}
+            onClick={() => downloadWallet(wallet)}
             className="px-3 py-1 bg-green-600 text-white rounded-lg mt-2"
           >
             Download Wallet JSON
