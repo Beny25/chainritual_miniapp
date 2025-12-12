@@ -31,9 +31,12 @@ export function downloadWallet(wallet: Wallet) {
   a.click();
 }
 
-export async function loadWallet(file: File): Promise<Wallet> {
-  const text = await file.text();
-  const wallet: Wallet = JSON.parse(text);
+export async function loadWalletFromSecretKey(secretKey: string): Promise<Wallet> {
+  // logika generate wallet dari secretKey
+  const wallet: Wallet = {
+    publicKey: derivePublicKeyFromSecret(secretKey), // ganti sesuai logika kamu
+    secretKey,
+  };
   saveWalletToLocal(wallet);
   return wallet;
 }
