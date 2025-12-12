@@ -51,7 +51,7 @@ const handleLoadSecretKey = async () => {
   }
 
   try {
-    const loadedWallet = await loadWalletFromSecretKey(secretKey);
+    const loadedWallet = await loadWallet(secretKey);
     setWallet(loadedWallet);
     setAllWallets([loadedWallet]);
     saveWalletToLocal(loadedWallet);
