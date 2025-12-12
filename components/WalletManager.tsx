@@ -41,19 +41,24 @@ export default function WalletManager({ wallet, setWallet }: WalletManagerProps)
     setAllWallets([newWallet]);
   };
 
-  // Load wallet dari file JSON
-  const handleLoad = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      try {
-        const loadedWallet = await loadWallet(file);
-        setWallet(loadedWallet);
-        setAllWallets([loadedWallet]);
-      } catch (err) {
-        alert("Failed to load wallet: " + err);
-      }
-    }
-  };
+  // Load wallet dari secret key 
+  const [secretKey, setSecretKey] = useState("");
+
+const handleLoadSecretKey = async () => {
+  if (secretKey.length < 64 || !/^[0-9a-fA-F]{64}$/.test(secretKey)) {
+    alert("Invalid secret key! Must be 64 hex characters.");
+    return;
+  }
+
+  try {
+    const loadedWallet = await loadWalletFromSecretKey(secretKey);
+    setWallet(loadedWallet);
+    setAllWallets([loadedWallet]);
+    saveWalletToLocal(loadedWallet);
+  } catch (err) {
+    alert("Failed to load wallet: " + err);
+  }
+};
 
   // Download wallet JSON
   const downloadWalletFile = (wallet: Wallet) => {
@@ -77,15 +82,22 @@ export default function WalletManager({ wallet, setWallet }: WalletManagerProps)
           Create Wallet
         </button>
 
-        <label className="bg-gray-300 text-black px-4 py-2 rounded-lg cursor-pointer">
-          Load Wallet
-          <input
-            type="file"
-            accept=".json"
-            onChange={handleLoad}
-            className="hidden"
-          />
-        </label>
+  <input
+    type="text"
+    value={secretKey}
+    onChange={(e) => setSecretKey(e.target.value)}
+    placeholder="Paste your 64-char hex secret key..."
+    className="border p-2 rounded w-full max-w-xs"
+    maxLength={64}
+  />
+
+  <button
+    onClick={handleLoadSecretKey}
+    className="bg-gray-600 text-white px-4 py-2 rounded-lg"
+  >
+    Load Wallet
+  </button>
+</div>
 
         {wallet && (
           <>
@@ -132,4 +144,4 @@ export default function WalletManager({ wallet, setWallet }: WalletManagerProps)
       )}
     </div>
   );
-      }
+ }
