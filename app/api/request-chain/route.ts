@@ -1,37 +1,25 @@
-import { NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
+// request-chain.ts
+import type { NextApiRequest, NextApiResponse } from "next";
 
-const execAsync = promisify(exec);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") return res.status(405).end("Method not allowed");
 
-export async function POST(req: Request) {
+  const { publicKey } = req.body;
+  if (!publicKey) return res.status(400).json({ error: "Missing publicKey" });
+
   try {
-    const { publicKey } = await req.json();
-    if (!publicKey) {
-      return NextResponse.json(
-        { success: false, error: "Missing publicKey" },
-        { status: 400 }
-      );
-    }
+    const response = await fetch(`${process.env.NEXT_PUBLIC_LINERA_FAUCET}/request-chain`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ owner: publicKey }),
+    });
 
-    // Jalankan perintah CLI linera untuk request chain
-    // Pastikan local faucet sudah jalan di port 8080
-    const cmd = `linera wallet request-chain --faucet http://localhost:8080`;
-    const { stdout, stderr } = await execAsync(cmd);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Faucet request failed");
 
-    if (stderr) {
-      console.error("Request chain stderr:", stderr);
-    }
-
-    console.log("Request chain stdout:", stdout);
-
-    // parsing output stdout bisa disesuaikan, misal ambil chain_id/account_id
-    const lines = stdout.trim().split("\n");
-    const chainInfo = lines[lines.length - 1]; // biasanya output terakhir chain info
-
-    return NextResponse.json({ success: true, data: chainInfo });
+    // kembalikan chainId dari faucet
+    res.status(200).json({ chainId: data.chainId });
   } catch (err: any) {
-    console.error("Request chain error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    res.status(500).json({ error: err.message });
   }
 }
