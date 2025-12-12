@@ -2,45 +2,68 @@
 
 import { useState } from "react";
 
-export default function FaucetRequest({ publicKey, onRefresh }: { publicKey: string; onRefresh: () => void }) {
+type Props = {
+  publicKey: string;
+  onRefresh?: () => void;
+};
+
+export default function FaucetRequest({ publicKey, onRefresh }: Props) {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [result, setResult] = useState<any>(null);
 
   const handleRequest = async () => {
     setLoading(true);
-    setMessage("");
+    setResult(null);
 
     try {
-      const res = await fetch("/api/faucet", {
+      // 1️⃣ Request chain dulu
+      const chainRes = await fetch("/api/request-chain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicKey }),
       });
-      const data = await res.json();
+      const chainData = await chainRes.json();
+      console.log("Chain response:", chainData);
 
-      if (data.success) {
-        setMessage("Faucet berhasil! Silakan tunggu beberapa detik untuk balance update.");
-        onRefresh(); // trigger balance refresh
+      // 2️⃣ Setelah chain siap, request faucet
+      const faucetRes = await fetch("/api/faucet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicKey }),
+      });
+      const faucetData = await faucetRes.json();
+      console.log("Faucet response:", faucetData);
+
+      if (faucetData.success) {
+        setResult({ success: true, data: faucetData.data });
+        alert("Faucet berhasil! Silakan cek saldo beberapa detik lagi.");
+        if (onRefresh) onRefresh(); // refresh balance
       } else {
-        setMessage("Faucet gagal: " + (data.error ?? "Unknown error"));
+        setResult({ success: false, error: faucetData.error });
+        alert("Faucet gagal: " + faucetData.error);
       }
     } catch (err: any) {
-      setMessage("Faucet error: " + err.message);
+      console.error(err);
+      setResult({ success: false, error: err.message });
+      alert("Faucet gagal: " + err.message);
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="p-4 border rounded-xl bg-white mt-4">
+    <div className="space-y-2">
       <button
         onClick={handleRequest}
         disabled={loading}
-        className="px-4 py-2 bg-purple-600 text-white rounded-lg"
+        className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
       >
         {loading ? "Requesting..." : "Request Testnet Tokens"}
       </button>
-      {message && <p className="mt-2 text-sm">{message}</p>}
+
+      {result && (
+        <pre className="text-sm">{JSON.stringify(result, null, 2)}</pre>
+      )}
     </div>
   );
 }
