@@ -31,29 +31,29 @@ export default function WalletCreateForm({ setWallet }: { setWallet: (wallet: Wa
   };
 
   const handleCreate = async () => {
-    setLoading(true);
-    try {
-      // 1️⃣ create wallet
-      const w = generateWallet();
+  setLoading(true);
+  try {
+    // 1️⃣ create wallet
+    const w = generateWallet();
 
-      // 2️⃣ request chain dari backend / miniapp faucet
-      const chainId = await requestChain();
-      w.chainId = chainId;
+    // 2️⃣ request chain dari backend / miniapp faucet pakai publicKey
+    const chainId = await requestChain(w.publicKey);
+    w.chainId = chainId;
 
-      // 3️⃣ simpan di localStorage & update state
-      saveWalletToLocal(w);
-      setWallet(w);
-      setLocalWallet(w);
+    // 3️⃣ simpan di localStorage & update state
+    saveWalletToLocal(w);
+    setWallet(w);
+    setLocalWallet(w);
 
-      // 4️⃣ fetch balance
-      fetchBalance(chainId);
-    } catch (err) {
-      console.error("Failed to create wallet + request chain:", err);
-      alert("Gagal create wallet / request chain, cek console.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // 4️⃣ fetch balance
+    fetchBalance(chainId);
+  } catch (err) {
+    console.error("Failed to create wallet + request chain:", err);
+    alert("Gagal create wallet / request chain, cek console.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="p-4 border rounded-xl bg-white space-y-4">
