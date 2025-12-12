@@ -2,13 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-interface WalletBalanceProps {
-  publicKey: string;
-  refreshSignal?: number;
-}
-
-export default function WalletBalance({ publicKey, refreshSignal }: WalletBalanceProps) {
-  const [balance, setBalance] = useState<number | null>(null);
+export default function WalletBalance({ publicKey, refreshSignal }: { publicKey: string; refreshSignal?: number }) {
+  const [balance, setBalance] = useState("Loading...");
 
   const fetchBalance = async () => {
     try {
@@ -18,26 +13,21 @@ export default function WalletBalance({ publicKey, refreshSignal }: WalletBalanc
         body: JSON.stringify({ publicKey }),
       });
       const data = await res.json();
-
-      if (data.success) {
-        setBalance(data.balance);
-      } else {
-        setBalance(0); // fallback kalau error
-      }
+      setBalance(data?.balance ?? 0);
     } catch {
-      setBalance(0); // fallback kalau fetch gagal
+      setBalance("Error fetching balance");
     }
   };
 
   useEffect(() => {
     fetchBalance();
-    const interval = setInterval(fetchBalance, 10000);
+    const interval = setInterval(fetchBalance, 5000); // auto-refresh tiap 5 detik
     return () => clearInterval(interval);
   }, [publicKey, refreshSignal]);
 
   return (
     <div className="p-4 border rounded-xl bg-white mt-4">
-      <b>Balance:</b> {balance !== null ? balance : "Loading..."} tokens
+      <b>Balance:</b> {balance} tokens
     </div>
   );
 }
