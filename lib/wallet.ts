@@ -31,12 +31,21 @@ export function downloadWallet(wallet: Wallet) {
   a.click();
 }
 
-export async function loadWalletFromSecretKey(secretKey: string): Promise<Wallet> {
-  // logika generate wallet dari secretKey
-  const wallet: Wallet = {
-    publicKey: derivePublicKeyFromSecret(secretKey), // ganti sesuai logika kamu
-    secretKey,
-  };
+export async function loadWallet(input: File | string): Promise<Wallet> {
+  let wallet: Wallet;
+
+  if (typeof input === "string") {
+    // input berupa secret key
+    wallet = {
+      publicKey: derivePublicKeyFromSecret(input),
+      secretKey: input,
+    };
+  } else {
+    // input berupa File JSON
+    const text = await input.text();
+    wallet = JSON.parse(text);
+  }
+
   saveWalletToLocal(wallet);
   return wallet;
 }
