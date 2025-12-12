@@ -5,7 +5,7 @@ import {
   generateWallet,
   downloadWallet,
   getWalletFromLocal,
-  loadWalletFromSecretKey,
+  loadWallet,
   saveWalletToLocal,
   clearWallet,
 } from "@/lib/wallet";
@@ -51,7 +51,7 @@ const handleLoadSecretKey = async () => {
   }
 
   try {
-    const loadedWallet = await loadWalletFromSecretKey(secretKey);
+    const loadedWallet = await loadWallet(secretKey); // string sekarang diterima
     setWallet(loadedWallet);
     setAllWallets([loadedWallet]);
     saveWalletToLocal(loadedWallet);
