@@ -1,27 +1,16 @@
+// app/api/balance/route.ts
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  const { publicKey } = await req.json();
+  if (!publicKey) return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
+
   try {
-    const { publicKey } = await req.json();
-    if (!publicKey) {
-      return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
-    }
-
-    // Fetch balance dari node testnet via server
-    const NODE_URL = `https://node.testnet-conway.linera.net/api/v1/accounts/${publicKey}`;
-
+    // endpoint node lokal (sesuaikan port & path)
+    const NODE_URL = `http://localhost:9001/api/v1/accounts/${publicKey}`;
     const res = await fetch(NODE_URL);
-    if (!res.ok) {
-      return NextResponse.json({ error: `Node returned status ${res.status}` }, { status: res.status });
-    }
-
     const data = await res.json();
-
-    // Sesuaikan field balance sesuai response node
-    // Contoh jika response { balance: 1000 }
-    const balance = data.balance ?? 0;
-
-    return NextResponse.json({ success: true, balance });
+    return NextResponse.json({ balance: data?.balance ?? 0 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
