@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import {
   generateWallet,
@@ -15,45 +13,33 @@ type Wallet = {
   secretKey: string;
 };
 
-type WalletManagerProps = {
-  wallet: Wallet | null;
-  setWallet: React.Dispatch<React.SetStateAction<Wallet | null>>;
-};
-
-export default function WalletManager({ wallet, setWallet }: WalletManagerProps) {
+export default function WalletManager() {
+  const [wallet, setWallet] = useState<Wallet | null>(null);
   const [allWallets, setAllWallets] = useState<Wallet[]>([]);
+  const [showLoadForm, setShowLoadForm] = useState(false); // <-- toggle
 
-  // Ambil wallet dari local storage saat mount
-  const refreshWallets = () => {
+  useEffect(() => {
     const w = getWalletFromLocal();
     if (w) setWallet(w);
     setAllWallets(w ? [w] : []);
-  };
-
-  useEffect(() => {
-    refreshWallets();
   }, []);
 
-  // Create wallet baru
   const handleCreate = () => {
     const newWallet = generateWallet();
     setWallet(newWallet);
     setAllWallets([newWallet]);
   };
 
-  // Download wallet JSON
-  const downloadWalletFile = (wallet: Wallet) => downloadWallet(wallet);
-
-  // Delete wallet
   const handleDelete = () => {
     clearWallet();
     setWallet(null);
     setAllWallets([]);
   };
 
+  const downloadWalletFile = (w: Wallet) => downloadWallet(w);
+
   return (
     <div className="space-y-4 p-4 bg-white rounded-xl shadow">
-      {/* Create Wallet button */}
       <div className="flex gap-2">
         <button
           onClick={handleCreate}
@@ -61,17 +47,27 @@ export default function WalletManager({ wallet, setWallet }: WalletManagerProps)
         >
           Create Wallet
         </button>
+
+        <button
+          onClick={() => setShowLoadForm((prev) => !prev)}
+          className="bg-gray-600 text-white px-4 py-2 rounded-lg"
+        >
+          Load Wallet
+        </button>
       </div>
 
-      {/* Load Wallet Form */}
-      <WalletLoadForm
-  onLoaded={(w) => {
-    setWallet(w);
-    setAllWallets([w]);
-  }}
-/>
+      {/* Form muncul hanya kalau showLoadForm = true */}
+      {showLoadForm && (
+        <WalletLoadForm
+          onLoaded={(w) => {
+            setWallet(w);
+            setAllWallets([w]);
+            setShowLoadForm(false); // form otomatis hilang setelah load
+          }}
+        />
+      )}
 
-      {/* Backup / Delete buttons */}
+      {/* Backup / Delete */}
       {wallet && (
         <div className="flex gap-2 mt-2">
           <button
@@ -99,7 +95,7 @@ export default function WalletManager({ wallet, setWallet }: WalletManagerProps)
         </div>
       )}
 
-      {/* Saved Wallets list */}
+      {/* Saved Wallets */}
       {allWallets.length > 1 && (
         <div>
           <div className="font-semibold mb-1">Saved Wallets:</div>
@@ -117,4 +113,4 @@ export default function WalletManager({ wallet, setWallet }: WalletManagerProps)
       )}
     </div>
   );
- }
+}
