@@ -1,34 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { loadWalletFromSecretKey, saveWalletToLocal } from "@/lib/wallet";
+import { loadWalletFromSecretKey, Wallet } from "@/lib/wallet";
 
-export default function WalletLoadForm({ setWallet }: { setWallet: (wallet: any) => void }) {
+export default function WalletLoadForm({
+  onLoaded,
+}: {
+  onLoaded: (wallet: Wallet) => void;
+}) {
   const [secretKey, setSecretKey] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleLoad = async () => {
+  const handleLoad = () => {
     try {
-      const w = await loadWalletFromSecretKey(secretKey);
-      setWallet(w);
-      saveWalletToLocal(w);
+      const wallet = loadWalletFromSecretKey(secretKey.trim());
+      onLoaded(wallet);
       setError(null);
-    } catch (e) {
-      setError("Invalid secret key");
+    } catch (e: any) {
+      setError(e.message);
     }
   };
 
   return (
-    <div className="p-4 border rounded-xl bg-white mt-4 space-y-3">
+    <div className="p-4 border rounded-xl space-y-2">
       <textarea
         value={secretKey}
         onChange={(e) => setSecretKey(e.target.value)}
-        placeholder="Paste your secret key here..."
+        placeholder="Paste 64-char hex secret key"
         className="w-full p-2 border rounded"
       />
+
       <button
         onClick={handleLoad}
-        className="px-4 py-2 bg-purple-600 text-white rounded-lg"
+        className="bg-purple-600 text-white px-4 py-2 rounded-lg"
       >
         Load Wallet
       </button>
