@@ -65,11 +65,11 @@ export default function WalletManager({ wallet, setWallet }: WalletManagerProps)
 
       {/* Load Wallet Form */}
       <WalletLoadForm
-        setWallet={(w) => {
-          setWallet(w);
-          setAllWallets([w]);
-        }}
-      />
+  onLoaded={(w) => {
+    setWallet(w);
+    setAllWallets([w]);
+  }}
+/>
 
       {/* Backup / Delete buttons */}
       {wallet && (
