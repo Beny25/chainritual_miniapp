@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import {
   generateWallet,
   downloadWallet,
@@ -8,7 +10,7 @@ import {
 } from "@/lib/wallet";
 import WalletLoadForm from "@/components/WalletLoadForm";
 
-type Wallet = {
+export type Wallet = {
   publicKey: string;
   secretKey: string;
 };
@@ -16,30 +18,39 @@ type Wallet = {
 export default function WalletManager() {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [allWallets, setAllWallets] = useState<Wallet[]>([]);
-  const [showLoadForm, setShowLoadForm] = useState(false); // <-- toggle
+  const [showLoadForm, setShowLoadForm] = useState(false);
 
-  useEffect(() => {
+  // Ambil wallet dari local storage saat mount
+  const refreshWallets = () => {
     const w = getWalletFromLocal();
     if (w) setWallet(w);
     setAllWallets(w ? [w] : []);
+  };
+
+  useEffect(() => {
+    refreshWallets();
   }, []);
 
+  // Create wallet baru
   const handleCreate = () => {
     const newWallet = generateWallet();
     setWallet(newWallet);
     setAllWallets([newWallet]);
   };
 
+  // Download wallet JSON
+  const downloadWalletFile = (wallet: Wallet) => downloadWallet(wallet);
+
+  // Delete wallet
   const handleDelete = () => {
     clearWallet();
     setWallet(null);
     setAllWallets([]);
   };
 
-  const downloadWalletFile = (w: Wallet) => downloadWallet(w);
-
   return (
     <div className="space-y-4 p-4 bg-white rounded-xl shadow">
+      {/* Create / Load Buttons */}
       <div className="flex gap-2">
         <button
           onClick={handleCreate}
@@ -56,18 +67,18 @@ export default function WalletManager() {
         </button>
       </div>
 
-      {/* Form muncul hanya kalau showLoadForm = true */}
+      {/* Load Wallet Form (toggle) */}
       {showLoadForm && (
         <WalletLoadForm
-          onLoaded={(w) => {
+          onLoaded={(w: Wallet) => {
             setWallet(w);
             setAllWallets([w]);
-            setShowLoadForm(false); // form otomatis hilang setelah load
+            setShowLoadForm(false);
           }}
         />
       )}
 
-      {/* Backup / Delete */}
+      {/* Backup / Delete Buttons */}
       {wallet && (
         <div className="flex gap-2 mt-2">
           <button
@@ -81,6 +92,28 @@ export default function WalletManager() {
             className="bg-red-600 text-white px-4 py-2 rounded-lg"
           >
             Delete Wallet
+          </button>
+        </div>
+      )}
+
+      {/* Faucet & Send (Coming Soon) */}
+      {wallet && (
+        <div className="space-y-2 mt-2">
+          <button
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={() =>
+              alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")
+            }
+          >
+            Request Testnet Tokens
+          </button>
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={() =>
+              alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")
+            }
+          >
+            Send Tokens
           </button>
         </div>
       )}
