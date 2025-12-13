@@ -51,7 +51,7 @@ export default function WalletManager() {
   return (
     <div className="space-y-4 p-4 bg-white rounded-xl shadow">
       {/* Create / Load Buttons */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={handleCreate}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg"
