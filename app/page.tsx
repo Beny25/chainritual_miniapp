@@ -22,7 +22,7 @@ export default function Page() {
     <div className="max-w-md mx-auto mt-2 p-4 space-y-6">
       <HeaderBanner />
 
-      <WalletManager setWallet={setWallet} wallet={wallet} />
+      <WalletManager wallet={wallet} setWallet={setWallet} />
 
       {wallet && (
   <div className="space-y-4 bg-white p-4 rounded-xl shadow">
