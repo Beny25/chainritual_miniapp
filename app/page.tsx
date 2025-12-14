@@ -30,25 +30,33 @@ export default function Page() {
         </div>
       )}
 
-      {wallet && (
-        <div className="space-y-4 bg-white p-4 rounded-xl shadow">
+  {wallet && (
+  <div className="space-y-4 bg-white p-4 rounded-xl shadow">
+    {/* Public Key Display */}
+    <div className="text-sm">
+      <span className="font-semibold">Current Wallet Public Key:</span>
+      <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
+        {wallet.publicKey}
+      </div>
+    </div>
 
-          {/* Public Key Display */}
-          <div className="text-sm">
-            <span className="font-semibold">Public Key:</span>
-            <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
-              {wallet.publicKey}
-            </div>
-          </div>
+    {/* Faucet - coming soon */}
+    <button
+      className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
+      onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
+    >
+      Request Testnet Tokens
+    </button>
 
-          {/* Faucet Request */}
-          <FaucetRequest publicKey={wallet.publicKey} reloadBalance={reloadBalance} />
-
-          {/* Send Token */}
-          <SendTokenForm wallet={wallet} reloadBalance={reloadBalance} />
-
-        </div>
-      )}
+    {/* Send - coming soon */}
+    <button
+      className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
+      onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
+    >
+      Send Tokens
+    </button>
+  </div>
+)}
     </div>
   );
 }
