@@ -133,5 +133,3 @@ export default function WalletManager({ wallet, setWallet }: WalletManagerProps)
     </div>
   );
       }
-
-Ternyata disini bro yg diubah hehe
