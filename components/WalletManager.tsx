@@ -5,84 +5,100 @@ import {
   generateWallet,
   downloadWallet,
   getWalletFromLocal,
+  loadWallet,
   saveWalletToLocal,
   clearWallet,
-  loadWalletFromSecretKey,
-  Wallet,
 } from "@/lib/wallet";
 
-export default function WalletManager() {
-  const [wallet, setWallet] = useState<Wallet | null>(null);
+type Wallet = {
+  publicKey: string;
+  secretKey: string;
+};
+
+type WalletManagerProps = {
+  wallet: Wallet | null;
+  setWallet: React.Dispatch<React.SetStateAction<Wallet | null>>;
+};
+
+export default function WalletManager({ wallet, setWallet }: WalletManagerProps) {
   const [allWallets, setAllWallets] = useState<Wallet[]>([]);
-  const [showLoadForm, setShowLoadForm] = useState(false);
-  const [secretKeyInput, setSecretKeyInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
+
+  // Ambil wallet dari local storage saat komponen mount
+  const refreshWallets = () => {
+    const w = getWalletFromLocal();
+    if (w) setWallet(w);
+    setAllWallets(w ? [w] : []);
+  };
 
   useEffect(() => {
-    const w = getWalletFromLocal();
-    if (w) {
-      setWallet(w);
-      setAllWallets([w]);
-    }
+    refreshWallets();
   }, []);
 
+  // Create wallet baru
   const handleCreate = () => {
     const newWallet = generateWallet();
     setWallet(newWallet);
     setAllWallets([newWallet]);
   };
 
-  const handleLoad = async () => {
-    try {
-      const w = await loadWalletFromSecretKey(secretKeyInput);
-      saveWalletToLocal(w);
-      setWallet(w);
-      setAllWallets([w]);
-      setShowLoadForm(false);
-      setSecretKeyInput("");
-      setError(null);
-    } catch {
-      setError("Invalid secret key!");
+  // Load wallet dari file JSON
+  const handleLoad = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      try {
+        const loadedWallet = await loadWallet(file);
+        setWallet(loadedWallet);
+        setAllWallets([loadedWallet]);
+      } catch (err) {
+        alert("Failed to load wallet: " + err);
+      }
     }
   };
 
+  // Download wallet JSON
+  const downloadWalletFile = (wallet: Wallet) => {
+    downloadWallet(wallet);
+  };
+
+  // Delete wallet (clear local storage and state)
   const handleDelete = () => {
     clearWallet();
     setWallet(null);
     setAllWallets([]);
   };
 
-  const handleDownload = () => {
-    if (wallet) downloadWallet(wallet);
-  };
-
   return (
     <div className="space-y-4 p-4 bg-white rounded-xl shadow">
-      {/* Create / Load */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2">
         <button
           onClick={handleCreate}
-          className="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg"
         >
           Create Wallet
         </button>
-        <button
-          onClick={() => setShowLoadForm((prev) => !prev)}
-          className="bg-gray-600 text-white px-3 py-1 rounded-lg text-sm"
-        >
+
+        <label className="bg-gray-300 text-black px-4 py-2 rounded-lg cursor-pointer">
           Load Wallet
-        </button>
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleLoad}
+            className="hidden"
+          />
+        </label>
+
         {wallet && (
           <>
             <button
-              onClick={handleDownload}
-              className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm"
+              onClick={() => downloadWalletFile(wallet)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg"
             >
               Backup Wallet
             </button>
+
             <button
               onClick={handleDelete}
-              className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm"
+              className="bg-red-600 text-white px-4 py-2 rounded-lg"
             >
               Delete Wallet
             </button>
@@ -90,36 +106,32 @@ export default function WalletManager() {
         )}
       </div>
 
-      {/* Load Form */}
-      {showLoadForm && (
-        <div className="mt-2 space-y-1">
-          <input
-            type="text"
-            value={secretKeyInput}
-            onChange={(e) => setSecretKeyInput(e.target.value)}
-            placeholder="Paste 64-char secret key"
-            className="border p-1 rounded w-full text-sm"
-            maxLength={64}
-          />
-          <button
-            onClick={handleLoad}
-            className="bg-gray-600 text-white px-3 py-1 rounded-lg text-sm"
-          >
-            Load
-          </button>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+      {wallet && (
+        <div>
+          <div className="font-semibold mb-1">Current Wallet Public Key:</div>
+          <div className="font-mono bg-gray-100 p-2 rounded break-all">
+            {wallet.publicKey}
+          </div>
         </div>
       )}
 
-      {/* Current Wallet */}
-      {wallet && (
-        <div className="mt-2">
-          <div className="font-semibold mb-1 text-sm">Current Wallet Public Key:</div>
-          <div className="font-mono bg-gray-100 p-2 rounded break-all text-xs">
-            {wallet.publicKey}
-          </div>
+      {allWallets.length > 1 && (
+        <div>
+          <div className="font-semibold mb-1">Saved Wallets:</div>
+          <ul className="space-y-1 max-h-40 overflow-y-auto">
+            {allWallets.map((w) => (
+              <li
+                key={w.publicKey}
+                className="flex justify-between items-center bg-gray-100 p-2 rounded"
+              >
+                <span className="truncate">{w.publicKey}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
   );
       }
+
+Ternyata disini bro yg diubah hehe
