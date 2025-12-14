@@ -2,16 +2,10 @@ import nacl from "tweetnacl";
 
 const STORAGE_KEY = "linera_wallet";
 
-export type Wallet = {
-  publicKey: string;
-  secretKey: string;
-  chainId?: string; // optional, untuk chain request
-};
-
-export function generateWallet(): Wallet {
+export function generateWallet() {
   const keyPair = nacl.sign.keyPair();
 
-  const wallet: Wallet = {
+  const wallet = {
     publicKey: Buffer.from(keyPair.publicKey).toString("hex"),
     secretKey: Buffer.from(keyPair.secretKey).toString("hex"),
   };
@@ -20,7 +14,7 @@ export function generateWallet(): Wallet {
   return wallet;
 }
 
-export function downloadWallet(wallet: Wallet) {
+export function downloadWallet(wallet: any) {
   const blob = new Blob([JSON.stringify(wallet, null, 2)], {
     type: "application/json",
   });
@@ -31,14 +25,15 @@ export function downloadWallet(wallet: Wallet) {
   a.click();
 }
 
-export async function loadWallet(file: File): Promise<Wallet> {
+export async function loadWallet(file: File) {
   const text = await file.text();
-  const wallet: Wallet = JSON.parse(text);
+  const wallet = JSON.parse(text);
   saveWalletToLocal(wallet);
   return wallet;
 }
 
-export async function loadWalletFromSecretKey(secretKeyHex: string): Promise<Wallet> {
+export async function loadWalletFromSecretKey(secretKeyHex: string) {
+  // convert hex string to Uint8Array
   const secretKey = Uint8Array.from(
     secretKeyHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
   );
@@ -47,6 +42,7 @@ export async function loadWalletFromSecretKey(secretKeyHex: string): Promise<Wal
     throw new Error("Invalid secret key length");
   }
 
+  // generate public key from secret key
   const keyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
 
   return {
@@ -56,11 +52,11 @@ export async function loadWalletFromSecretKey(secretKeyHex: string): Promise<Wal
 }
 
 // ----- LOCAL STORAGE -----
-export function saveWalletToLocal(wallet: Wallet) {
+export function saveWalletToLocal(wallet: any) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(wallet));
 }
 
-export function getWalletFromLocal(): Wallet | null {
+export function getWalletFromLocal(): any | null {
   const w = localStorage.getItem(STORAGE_KEY);
   if (!w) return null;
   return JSON.parse(w);
