@@ -1,32 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function WalletBalance({ wallet }: { wallet: any }) {
-  const [balance, setBalance] = useState<number | null>(null);
+export default function WalletBalance({ publicKey }: { publicKey: string }) {
+  const [balance, setBalance] = useState(0);
+
+  const loadBalance = () => {
+    const key = "balance_" + publicKey;
+    const val = Number(localStorage.getItem(key) || 0);
+    setBalance(val);
+  };
 
   useEffect(() => {
-    if (!wallet?.chainId) return;
+    loadBalance();
+  }, [publicKey]);
 
-    const load = async () => {
-      const res = await fetch("/api/query-balance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chainId: wallet.chainId }),
-      });
-
-      const data = await res.json();
-      if (res.ok) setBalance(data.balance);
-    };
-
-    load();
-  }, [wallet]);
-
-  if (!wallet?.chainId) return null;
+  // listen update from SendTokenForm & Faucet
+  useEffect(() => {
+    const handler = () => loadBalance();
+    window.addEventListener("balance:update", handler);
+    return () => window.removeEventListener("balance:update", handler);
+  }, []);
 
   return (
-    <div className="bg-white p-3 rounded-xl shadow text-center">
-      <p><b>Balance:</b> {balance ?? "Loading..."} tokens</p>
+    <div className="p-4 border rounded-xl bg-white">
+      <b>Balance:</b> {balance}
     </div>
   );
 }
