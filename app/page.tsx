@@ -15,9 +15,26 @@ export default function Page() {
   const reloadBalance = () => setReloadFlag(prev => prev + 1);
 
   useEffect(() => {
-    const w = getWalletFromLocal();
-    if (w) setWallet(w);
+    const stored = localStorage.getItem("wallet");
+    if (stored) setWallet(JSON.parse(stored));
   }, []);
+
+  const handleDownload = () => {
+    const data = localStorage.getItem("wallet");
+    if (!data) return alert("No wallet found.");
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "wallet.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleClear = () => {
+    localStorage.removeItem("wallet");
+    setWallet(null);
+  };
 
   return (
     <div className="max-w-md mx-auto mt-2 p-4 space-y-6">
@@ -30,33 +47,45 @@ export default function Page() {
         </div>
       )}
 
-  {wallet && (
-  <div className="space-y-4 bg-white p-4 rounded-xl shadow">
-    {/* Public Key Display */}
-    <div className="text-sm">
-      <span className="font-semibold">Current Wallet Public Key:</span>
-      <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
-        {wallet.publicKey}
-      </div>
-    </div>
+      {wallet && (
+        <div className="space-y-4 bg-white p-4 rounded-xl shadow">
+          <div className="text-sm">
+            <span className="font-semibold">Current Wallet Public Key:</span>
+            <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
+              {wallet.publicKey}
+            </div>
+          </div>
 
-    {/* Faucet - coming soon */}
-    <button
-      className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
-      onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
-    >
-      Request Testnet Tokens
-    </button>
+          <button
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
+          >
+            Request Testnet Tokens
+          </button>
 
-    {/* Send - coming soon */}
-    <button
-      className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
-      onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
-    >
-      Send Tokens
-    </button>
-  </div>
-)}
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
+          >
+            Send Tokens
+          </button>
+
+          {/* Tambahan tombol baru */}
+          <button
+            className="bg-green-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={handleDownload}
+          >
+            Download Wallet
+          </button>
+
+          <button
+            className="bg-red-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={handleClear}
+          >
+            Clear Wallet
+          </button>
+        </div>
+      )}
     </div>
   );
 }
