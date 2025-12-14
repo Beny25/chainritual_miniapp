@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import WalletCreateForm from "@/components/WalletCreateForm";
 import WalletLoadForm from "@/components/WalletLoadForm";
-import WalletBalance from "@/components/WalletBalance";
 import FaucetRequest from "@/components/FaucetRequest";
 import SendTokenForm from "@/components/SendTokenForm";
 import { getWalletFromLocal } from "@/lib/wallet";
@@ -41,9 +40,6 @@ export default function Page() {
               {wallet.publicKey}
             </div>
           </div>
-
-          {/* Wallet Balance */}
-          <WalletBalance key={reloadFlag} publicKey={wallet.publicKey} />
 
           {/* Faucet Request */}
           <FaucetRequest publicKey={wallet.publicKey} reloadBalance={reloadBalance} />
