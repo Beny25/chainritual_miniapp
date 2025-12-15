@@ -74,13 +74,8 @@ export default function Page() {
             Clear Wallet
           </button>
 
-          {/* Faucet - coming soon */}
-          <button
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
-            onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
-          >
-            Request Testnet Tokens
-          </button>
+          {/* Faucet*/}
+         <FaucetRequest publicKey={wallet.publicKey} onRefresh={reloadBalance} />
 
           {/* Send - coming soon */}
           <button
