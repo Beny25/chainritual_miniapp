@@ -2,24 +2,35 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  try {
-    const { publicKey } = await req.json();
-    if (!publicKey) {
-      return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
-    }
+  const { publicKey } = await req.json();
 
-    // Request ke faucet lokal atau testnet
-    const response = await fetch(`${process.env.NEXT_PUBLIC_LINERA_FAUCET}/request-chain`, {
+  if (!publicKey) {
+    return NextResponse.json({ success: false, error: "Missing publicKey" });
+  }
+
+  try {
+    const faucetUrl = process.env.NEXT_PUBLIC_LINERA_FAUCET;
+
+    // request chain ke faucet
+    const res = await fetch(`${faucetUrl}/request-chain`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ owner: publicKey }),
+      body: JSON.stringify({
+        owner: publicKey,
+      }),
     });
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Faucet request failed");
+    const data = await res.json();
 
-    return NextResponse.json({ chainId: data.chainId });
+    return NextResponse.json({
+      success: true,
+      data,
+    });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({
+      success: false,
+      error: err.message,
+    });
   }
 }
+
