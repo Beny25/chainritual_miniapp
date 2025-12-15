@@ -8,7 +8,8 @@ const links = [
 
 export default function Footer() {
   function open(url: string) {
-    sdk.actions.openUrl(url);
+    // buka link di tab baru
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   return (
