@@ -16,38 +16,33 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
     setResult(null);
 
     try {
-      // ✅ pastikan publicKey pakai prefix 0x
-      const owner = publicKey.startsWith("0x") ? publicKey : `0x${publicKey}`;
+      // Pastikan publicKey selalu ada prefix "0x"
+      const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
 
-      // 1️⃣ Request chain dulu
-      const chainRes = await fetch("/api/request-chain", {
+      // Request langsung ke VPS GraphQL faucet
+      const query = {
+        query: `mutation { claim(owner: "${owner}") }`
+      };
+
+      const res = await fetch("http://192.210.217.157:8080", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey: owner }),
+        body: JSON.stringify(query),
       });
-      const chainData = await chainRes.json();
-      console.log("Chain response:", chainData);
 
-      if (!chainData.success) {
-        throw new Error(chainData.error || "Gagal membuat chain");
-      }
+      const data = await res.json();
+      console.log("Faucet response:", data);
 
-      // 2️⃣ Setelah chain siap, request faucet
-      const faucetRes = await fetch("/api/faucet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey: owner }),
-      });
-      const faucetData = await faucetRes.json();
-      console.log("Faucet response:", faucetData);
-
-      if (faucetData.success) {
-        setResult({ success: true, data: faucetData.data });
-        alert("Faucet berhasil! Silakan cek saldo beberapa detik lagi.");
+      if (data.data && data.data.claim) {
+        setResult({ success: true, data: data.data.claim });
         if (onRefresh) onRefresh(); // refresh balance
+        alert("Faucet berhasil! Silakan cek saldo beberapa detik lagi.");
+      } else if (data.errors) {
+        setResult({ success: false, error: data.errors[0].message });
+        alert("Faucet gagal: " + data.errors[0].message);
       } else {
-        setResult({ success: false, error: faucetData.error });
-        alert("Faucet gagal: " + faucetData.error);
+        setResult({ success: false, error: "Unknown error" });
+        alert("Faucet gagal: Unknown error");
       }
     } catch (err: any) {
       console.error(err);
