@@ -26,27 +26,20 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
       console.log("Chain response:", chainData);
 
       // 2️⃣ Setelah chain siap, request faucet
-      const faucetRes = await fetch("/api/faucet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
-      });
-      const faucetData = await faucetRes.json();
-      console.log("Faucet response:", faucetData);
+const faucetRes = await fetch("/api/faucet", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ publicKey }),
+});
+const faucetData = await faucetRes.json();
+console.log("Faucet response:", faucetData);
 
-      if (faucetData.success) {
-        setResult({ success: true, data: faucetData.data });
-        alert("Faucet berhasil! Silakan cek saldo beberapa detik lagi.");
-        if (onRefresh) onRefresh(); // refresh balance
-      } else {
-        setResult({ success: false, error: faucetData.error });
-        alert("Faucet gagal: " + faucetData.error);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setResult({ success: false, error: err.message });
-      alert("Faucet gagal: " + err.message);
-    }
+if (faucetData.success) {
+  setResult({ success: true, data: faucetData.data });
+  if (onRefresh) onRefresh(); // refresh balance
+} else {
+  setResult({ success: false, error: faucetData.error });
+}
 
     setLoading(false);
   };
