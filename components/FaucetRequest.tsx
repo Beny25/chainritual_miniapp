@@ -41,8 +41,8 @@ if (faucetData.success) {
   setResult({ success: false, error: faucetData.error });
 }
 
-    setLoading(false);
-  };
+   setLoading(false);
+
 
   return (
     <div className="space-y-2">
