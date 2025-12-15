@@ -9,11 +9,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Missing publicKey" });
     }
 
+    // Pastikan pakai 0x
+    const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
+
     const VPS_FAUCET_URL = "http://192.210.217.157:8080";
 
     const query = `
       mutation {
-        claim(owner: "${publicKey}")
+        claim(owner: "${owner}")
       }
     `;
 
@@ -32,8 +35,8 @@ export async function POST(req: Request) {
     const balance = data.data?.claim?.config?.balance || "0";
 
     // Simpan ke localStorage biar WalletBalance update
-    const key = "balance_" + publicKey;
     if (typeof window !== "undefined") {
+      const key = "balance_" + owner;
       localStorage.setItem(key, balance);
       window.dispatchEvent(new Event("balance:update")); // trigger update
     }
@@ -44,5 +47,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: err.message });
   }
 }
-
-
