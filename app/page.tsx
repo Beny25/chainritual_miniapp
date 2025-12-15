@@ -53,11 +53,12 @@ export default function Page() {
   <div className="space-y-4 bg-white p-4 rounded-xl shadow">
     {/* Public Key Display */}
     <div className="text-sm">
-      <span className="font-semibold">Current Wallet Public Key:</span>
-      <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
-        {wallet.publicKey}
-      </div>
-    </div>
+  <span className="font-semibold">Current Wallet Public Key:</span>
+  <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
+    {wallet.publicKey.startsWith("0x") ? wallet.publicKey : "0x" + wallet.publicKey}
+  </div>
+</div>
+
 
     {/* Wallet Balance */}
     <WalletBalance publicKey={wallet.publicKey} />
