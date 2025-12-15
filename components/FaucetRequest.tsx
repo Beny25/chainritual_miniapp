@@ -16,15 +16,15 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
     setResult(null);
 
     try {
-      // Pastikan publicKey selalu ada prefix "0x"
-      const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
+      // Tambahin prefix 0x kalau belum ada
+      const ownerAddress = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
 
-      // Request langsung ke VPS GraphQL faucet
+      // Mutation GraphQL untuk request faucet
       const query = {
-        query: `mutation { claim(owner: "${owner}") }`
+        query: `mutation { claim(owner: "${ownerAddress}") }`,
       };
 
-      const res = await fetch("http://192.210.217.157:8080", {
+      const res = await fetch(process.env.NEXT_PUBLIC_LINERA_FAUCET!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(query),
@@ -33,13 +33,13 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
       const data = await res.json();
       console.log("Faucet response:", data);
 
-      if (data.data && data.data.claim) {
+      if (data.data?.claim) {
         setResult({ success: true, data: data.data.claim });
-        if (onRefresh) onRefresh(); // refresh balance
         alert("Faucet berhasil! Silakan cek saldo beberapa detik lagi.");
+        if (onRefresh) onRefresh(); // refresh balance
       } else if (data.errors) {
-        setResult({ success: false, error: data.errors[0].message });
-        alert("Faucet gagal: " + data.errors[0].message);
+        setResult({ success: false, error: data.errors.map((e: any) => e.message).join(", ") });
+        alert("Faucet gagal: " + data.errors.map((e: any) => e.message).join(", "));
       } else {
         setResult({ success: false, error: "Unknown error" });
         alert("Faucet gagal: Unknown error");
