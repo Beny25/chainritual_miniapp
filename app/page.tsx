@@ -50,50 +50,49 @@ export default function Page() {
       )}
 
       {wallet && (
-  <div className="space-y-4 bg-white p-4 rounded-xl shadow">
-    {/* Public Key Display */}
-    <div className="text-sm">
-  <span className="font-semibold">Current Wallet Public Key:</span>
-  <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
-    {wallet.publicKey.startsWith("0x") ? wallet.publicKey : "0x" + wallet.publicKey}
-  </div>
-</div>
+        <div className="space-y-4 bg-white p-4 rounded-xl shadow">
+          {/* Public Key Display */}
+          <div className="text-sm">
+            <span className="font-semibold">Current Wallet Public Key:</span>
+            <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
+              {wallet.publicKey.startsWith("0x") ? wallet.publicKey : "0x" + wallet.publicKey}
+            </div>
+          </div>
 
+          {/* Wallet Balance */}
+          <WalletBalance publicKey={wallet.publicKey.startsWith("0x") ? wallet.publicKey : "0x" + wallet.publicKey} key={reloadFlag} />
 
-    {/* Wallet Balance */}
-    <WalletBalance publicKey={wallet.publicKey} />
+          {/* Download Wallet */}
+          <button
+            className="bg-green-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={handleDownload}
+          >
+            Download Wallet
+          </button>
 
-    {/* Download Wallet */}
-    <button
-      className="bg-green-600 text-white px-4 py-2 rounded-lg w-full"
-      onClick={handleDownload}
-    >
-      Download Wallet
-    </button>
+          {/* Clear Wallet */}
+          <button
+            className="bg-red-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={handleClear}
+          >
+            Clear Wallet
+          </button>
 
-    {/* Clear Wallet */}
-    <button
-      className="bg-red-600 text-white px-4 py-2 rounded-lg w-full"
-      onClick={handleClear}
-    >
-      Clear Wallet
-    </button>
+          {/* Faucet Request */}
+          <FaucetRequest publicKey={wallet.publicKey} onRefresh={reloadBalance} />
 
-    {/* Faucet Request */}
-    <FaucetRequest publicKey={wallet.publicKey} onRefresh={reloadBalance} />
-
-    {/* Send - coming soon */} 
-    <button 
-      className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full" 
-      onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
-      > 
-      Send Tokens 
-    </button> 
-  </div>
-)}
+          {/* Send Tokens */}
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
+            onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
+          >
+            Send Tokens
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <Footer />
     </div>
   );
-  }
+}
