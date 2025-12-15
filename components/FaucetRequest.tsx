@@ -16,33 +16,43 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
     setResult(null);
 
     try {
+      // ✅ pastikan publicKey pakai prefix 0x
+      const owner = publicKey.startsWith("0x") ? publicKey : `0x${publicKey}`;
+
       // 1️⃣ Request chain dulu
       const chainRes = await fetch("/api/request-chain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
+        body: JSON.stringify({ publicKey: owner }),
       });
       const chainData = await chainRes.json();
       console.log("Chain response:", chainData);
+
+      if (!chainData.success) {
+        throw new Error(chainData.error || "Gagal membuat chain");
+      }
 
       // 2️⃣ Setelah chain siap, request faucet
       const faucetRes = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
+        body: JSON.stringify({ publicKey: owner }),
       });
       const faucetData = await faucetRes.json();
       console.log("Faucet response:", faucetData);
 
       if (faucetData.success) {
         setResult({ success: true, data: faucetData.data });
-        if (onRefresh) onRefresh(); // refresh balance otomatis
+        alert("Faucet berhasil! Silakan cek saldo beberapa detik lagi.");
+        if (onRefresh) onRefresh(); // refresh balance
       } else {
         setResult({ success: false, error: faucetData.error });
+        alert("Faucet gagal: " + faucetData.error);
       }
     } catch (err: any) {
       console.error(err);
       setResult({ success: false, error: err.message });
+      alert("Faucet gagal: " + err.message);
     }
 
     setLoading(false);
