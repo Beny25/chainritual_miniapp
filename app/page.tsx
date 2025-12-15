@@ -7,6 +7,7 @@ import FaucetRequest from "@/components/FaucetRequest";
 import SendTokenForm from "@/components/SendTokenForm";
 import { getWalletFromLocal, clearWallet } from "@/lib/wallet";
 import HeaderBanner from "@/components/HeaderBanner";
+import Footer from "@/components/Footer";
 
 export default function Page() {
   const [wallet, setWallet] = useState<any>(null);
@@ -90,6 +91,8 @@ export default function Page() {
           </button>
         </div>
       )}
+      {/* Footer */}
+      <Footer />
     </div>
   );
-          }
+  }
