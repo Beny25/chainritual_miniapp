@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import WalletCreateForm from "@/components/WalletCreateForm";
 import WalletLoadForm from "@/components/WalletLoadForm";
 import FaucetRequest from "@/components/FaucetRequest";
+import WalletBalance from "@/components/WalletBalance";
 import SendTokenForm from "@/components/SendTokenForm";
 import { getWalletFromLocal, clearWallet } from "@/lib/wallet";
 import HeaderBanner from "@/components/HeaderBanner";
@@ -49,43 +50,42 @@ export default function Page() {
       )}
 
       {wallet && (
-        <div className="space-y-4 bg-white p-4 rounded-xl shadow">
-          {/* Public Key Display */}
-          <div className="text-sm">
-            <span className="font-semibold">Current Wallet Public Key:</span>
-            <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
-              {wallet.publicKey}
-            </div>
-          </div>
+  <div className="space-y-4 bg-white p-4 rounded-xl shadow">
+    {/* Public Key Display */}
+    <div className="text-sm">
+      <span className="font-semibold">Current Wallet Public Key:</span>
+      <div className="font-mono break-all mt-1 p-2 bg-gray-100 rounded">
+        {wallet.publicKey}
+      </div>
+    </div>
 
-          {/* Download Wallet */}
-          <button
-            className="bg-green-600 text-white px-4 py-2 rounded-lg w-full"
-            onClick={handleDownload}
-          >
-            Download Wallet
-          </button>
+    {/* Wallet Balance */}
+    <WalletBalance publicKey={wallet.publicKey} />
 
-          {/* Clear Wallet */}
-          <button
-            className="bg-red-600 text-white px-4 py-2 rounded-lg w-full"
-            onClick={handleClear}
-          >
-            Clear Wallet
-          </button>
+    {/* Download Wallet */}
+    <button
+      className="bg-green-600 text-white px-4 py-2 rounded-lg w-full"
+      onClick={handleDownload}
+    >
+      Download Wallet
+    </button>
 
-          {/* Faucet*/}
-         <FaucetRequest publicKey={wallet.publicKey} onRefresh={reloadBalance} />
+    {/* Clear Wallet */}
+    <button
+      className="bg-red-600 text-white px-4 py-2 rounded-lg w-full"
+      onClick={handleClear}
+    >
+      Clear Wallet
+    </button>
 
-          {/* Send - coming soon */}
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
-            onClick={() => alert("Coming Soon - Akan aktif saat URL faucet rilis publik.")}
-          >
-            Send Tokens
-          </button>
-        </div>
-      )}
+    {/* Faucet Request */}
+    <FaucetRequest publicKey={wallet.publicKey} onRefresh={reloadBalance} />
+
+    {/* Send Tokens */}
+    <SendTokenForm publicKey={wallet.publicKey} onRefresh={reloadBalance} />
+  </div>
+)}
+
       {/* Footer */}
       <Footer />
     </div>
