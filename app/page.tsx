@@ -89,7 +89,6 @@ export default function Page() {
       Send Tokens 
     </button> 
   </div>
-  </div>
 )}
 
       {/* Footer */}
