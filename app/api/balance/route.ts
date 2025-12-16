@@ -6,12 +6,30 @@ export async function POST(req: Request) {
   if (!publicKey) return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
 
   try {
-    // endpoint node lokal (sesuaikan port & path)
-    const NODE_URL = `http://localhost:9001/api/v1/accounts/${publicKey}`;
-    const res = await fetch(NODE_URL);
+    const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
+    const VPS_FAUCET_URL = "http://192.210.217.157:8080";
+
+    const query = `
+      query {
+        wallet(owner: "${owner}") {
+          config {
+            balance
+          }
+        }
+      }
+    `;
+
+    const res = await fetch(VPS_FAUCET_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+
     const data = await res.json();
-    return NextResponse.json({ balance: data?.balance ?? 0 });
+    const balance = data?.data?.wallet?.config?.balance ?? 0;
+
+    return NextResponse.json({ balance });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
-}
+      }
