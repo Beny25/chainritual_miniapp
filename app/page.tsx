@@ -79,8 +79,8 @@ export default function Page() {
           </button>
 
           {/* Faucet Request */}
-          <FaucetRequest publicKey={wallet.publicKey} onRefresh={reloadBalance} />
-
+          <FaucetRequest wallet={wallet} setWallet={setWallet} />
+          
           {/* Send Tokens */}
           <button
             className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
