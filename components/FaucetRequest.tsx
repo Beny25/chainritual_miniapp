@@ -3,17 +3,16 @@
 import { useState } from "react";
 
 type Props = {
-  publicKey: string; // wallet.publicKey
+  publicKey: string;
   onRefresh?: () => void;
 };
 
 export default function FaucetRequest({ publicKey, onRefresh }: Props) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [balance, setBalance] = useState<string | null>(null);
 
   const handleRequest = async () => {
     setLoading(true);
-    setResult(null);
 
     try {
       const res = await fetch("/api/faucet", {
@@ -25,21 +24,24 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
       const data = await res.json();
 
       if (data.success) {
-        // Update localStorage dan trigger event
-        const key = "balance_" + publicKey;
-        localStorage.setItem(key, data.data.balance);
-        window.dispatchEvent(new Event("balance:update"));
+        const newBalance = data.data?.claim?.config?.balance ?? "0";
 
-        setResult({ success: true, balance: data.data.balance });
-        if (onRefresh) onRefresh();
-        alert("Faucet berhasil! Silakan cek saldo beberapa detik lagi.");
+        if (newBalance === "0") {
+          // Wallet pernah claim faucet sebelumnya
+          alert("Faucet sudah pernah diklaim sebelumnya. Saldo tetap.");
+        } else {
+          // Update balance
+          localStorage.setItem("balance_" + publicKey, newBalance);
+          window.dispatchEvent(new Event("balance:update"));
+          setBalance(newBalance);
+          if (onRefresh) onRefresh();
+          alert(`Faucet berhasil! Saldo sekarang: ${newBalance}`);
+        }
       } else {
-        setResult({ success: false, error: data.error });
         alert("Faucet gagal: " + data.error);
       }
     } catch (err: any) {
-      console.error("Faucet request error:", err);
-      setResult({ success: false, error: err.message });
+      console.error(err);
       alert("Faucet gagal: " + err.message);
     }
 
@@ -56,7 +58,9 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
         {loading ? "Requesting..." : "Request Testnet Tokens"}
       </button>
 
-      {/* {result && <pre className="text-sm mt-2">{JSON.stringify(result, null, 2)}</pre>} */}
+      {balance !== null && (
+        <p className="text-sm mt-2">Balance: {balance}</p>
+      )}
     </div>
   );
 }
