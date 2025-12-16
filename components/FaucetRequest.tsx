@@ -56,7 +56,7 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
         {loading ? "Requesting..." : "Request Testnet Tokens"}
       </button>
 
-      {result && <pre className="text-sm">{JSON.stringify(result, null, 2)}</pre>}
+      {/* {result && <pre className="text-sm mt-2">{JSON.stringify(result, null, 2)}</pre>} */}
     </div>
   );
 }
