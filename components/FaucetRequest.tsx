@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 type Props = {
-  publicKey: string;
+  publicKey: string; // wallet.publicKey
   onRefresh?: () => void;
 };
 
@@ -16,36 +16,29 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
     setResult(null);
 
     try {
-      // Tambahin prefix 0x kalau belum ada
-      const ownerAddress = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
-
-      // Mutation GraphQL untuk request faucet
-      const query = {
-        query: `mutation { claim(owner: "${ownerAddress}") }`,
-      };
-
-      const res = await fetch(process.env.NEXT_PUBLIC_LINERA_FAUCET!, {
+      const res = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(query),
+        body: JSON.stringify({ publicKey }),
       });
 
       const data = await res.json();
-      console.log("Faucet response:", data);
 
-      if (data.data?.claim) {
-        setResult({ success: true, data: data.data.claim });
+      if (data.success) {
+        // Update localStorage dan trigger event
+        const key = "balance_" + publicKey;
+        localStorage.setItem(key, data.data.balance);
+        window.dispatchEvent(new Event("balance:update"));
+
+        setResult({ success: true, balance: data.data.balance });
+        if (onRefresh) onRefresh();
         alert("Faucet berhasil! Silakan cek saldo beberapa detik lagi.");
-        if (onRefresh) onRefresh(); // refresh balance
-      } else if (data.errors) {
-        setResult({ success: false, error: data.errors.map((e: any) => e.message).join(", ") });
-        alert("Faucet gagal: " + data.errors.map((e: any) => e.message).join(", "));
       } else {
-        setResult({ success: false, error: "Unknown error" });
-        alert("Faucet gagal: Unknown error");
+        setResult({ success: false, error: data.error });
+        alert("Faucet gagal: " + data.error);
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("Faucet request error:", err);
       setResult({ success: false, error: err.message });
       alert("Faucet gagal: " + err.message);
     }
@@ -63,9 +56,7 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
         {loading ? "Requesting..." : "Request Testnet Tokens"}
       </button>
 
-      {result && (
-        <pre className="text-sm">{JSON.stringify(result, null, 2)}</pre>
-      )}
+      {result && <pre className="text-sm">{JSON.stringify(result, null, 2)}</pre>}
     </div>
   );
 }
