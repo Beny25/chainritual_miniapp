@@ -14,6 +14,7 @@
 - ✨ **Create wallet baru** dengan generate keypair
 - 💾 **Download wallet JSON** (public & secret key)
 - 📂 **Load wallet** dari file JSON yang diupload
+- 🧪 **Request Testnet Tokens** via Linera Faucet *(UI berhasil tapi balance real-time di UI belum update)*
 
 ---
 
@@ -26,7 +27,7 @@
 - [ ] Simpan wallet ke localStorage untuk persistent session
 
 ### Fase 2: Interaksi Blockchain
-- [ ] Request testnet faucet token (Linera testnet)
+- [x] Request testnet faucet token *(sudah bisa, balance akan muncul setelah query wallet real-time)*
 - [ ] Kirim transaksi / send token antar wallet
 
 ### Fase 3: UX/UI Improvement
