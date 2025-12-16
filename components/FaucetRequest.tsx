@@ -3,22 +3,23 @@
 import { useState } from "react";
 
 type Props = {
-  publicKey: string;
-  onRefresh?: () => void;
+  wallet: any; // wallet global state
+  setWallet: (w: any) => void; // updater wallet
 };
 
-export default function FaucetRequest({ publicKey, onRefresh }: Props) {
+export default function FaucetRequest({ wallet, setWallet }: Props) {
   const [loading, setLoading] = useState(false);
-  const [balance, setBalance] = useState<string | null>(null);
 
   const handleRequest = async () => {
+    if (!wallet?.publicKey) return alert("Buat wallet dulu bro");
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
+        body: JSON.stringify({ publicKey: wallet.publicKey }),
       });
 
       const data = await res.json();
@@ -27,21 +28,25 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
         const newBalance = data.data?.claim?.config?.balance ?? "0";
 
         if (newBalance === "0") {
-          // Wallet pernah claim faucet sebelumnya
           alert("Faucet sudah pernah diklaim sebelumnya. Saldo tetap.");
         } else {
-          // Update balance
-          localStorage.setItem("balance_" + publicKey, newBalance);
+          // Update wallet state global
+          const updatedWallet = { ...wallet, balance: newBalance };
+          setWallet(updatedWallet);
+
+          // Update localStorage
+          localStorage.setItem("balance_" + wallet.publicKey, newBalance);
+
+          // Trigger event untuk komponen lain kalau perlu
           window.dispatchEvent(new Event("balance:update"));
-          setBalance(newBalance);
-          if (onRefresh) onRefresh();
+
           alert(`Faucet berhasil! Saldo sekarang: ${newBalance}`);
         }
       } else {
         alert("Faucet gagal: " + data.error);
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("Faucet request error:", err);
       alert("Faucet gagal: " + err.message);
     }
 
@@ -58,8 +63,8 @@ export default function FaucetRequest({ publicKey, onRefresh }: Props) {
         {loading ? "Requesting..." : "Request Testnet Tokens"}
       </button>
 
-      {balance !== null && (
-        <p className="text-sm mt-2">Balance: {balance}</p>
+      {wallet?.balance && (
+        <p className="text-sm mt-2">Balance: {wallet.balance}</p>
       )}
     </div>
   );
