@@ -9,16 +9,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Missing publicKey" });
     }
 
-    // Pastikan pakai 0x
+    // Tambahkan prefix 0x otomatis
     const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
 
-    const VPS_FAUCET_URL = "http://192.210.217.157:8080";
+    const VPS_FAUCET_URL = "http://192.210.217.157:8080"; // Faucet di VPS
 
-    const query = `
-      mutation {
-        claim(owner: "${owner}")
-      }
-    `;
+    const query = `mutation { claim(owner: "${owner}") }`;
 
     const res = await fetch(VPS_FAUCET_URL, {
       method: "POST",
@@ -32,18 +28,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: data.errors[0].message });
     }
 
-    const balance = data.data?.claim?.config?.balance || "0";
-
-    // Simpan ke localStorage biar WalletBalance update
-    if (typeof window !== "undefined") {
-      const key = "balance_" + owner;
-      localStorage.setItem(key, balance);
-      window.dispatchEvent(new Event("balance:update")); // trigger update
-    }
+    const balance = data.data?.claim?.balance || "0";
 
     return NextResponse.json({ success: true, data: { balance } });
   } catch (err: any) {
-    console.error(err);
-    return NextResponse.json({ success: false, error: err.message });
+    console.error("Faucet API error:", err);
+    return NextResponse.json({ success: false, error: err.message || "Unknown error" });
   }
 }
