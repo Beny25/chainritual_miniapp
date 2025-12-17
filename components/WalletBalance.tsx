@@ -22,7 +22,9 @@ export default function WalletBalance({ publicKey }: WalletBalanceProps) {
       const res = await fetch("/api/balance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
+        body: JSON.stringify({
+  chainId: wallet.chainId,
+}),
       });
 
       const data = await res.json();
