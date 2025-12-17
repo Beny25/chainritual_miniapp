@@ -1,81 +1,56 @@
+// components/FaucetRequest.tsx
 "use client";
 
-import { Dispatch, SetStateAction, useState } from "react";
+import { useState } from "react";
 
-export type Wallet = {
+type Props = {
   publicKey: string;
-  privateKey?: string;
-  chainId?: string;
+  setChainId: (id: string) => void;
 };
 
-export type FaucetRequestProps = {
-  wallet: Wallet;
-  setWallet: Dispatch<SetStateAction<Wallet>>;
-};
-
-export default function FaucetRequest({
-  wallet,
-  setWallet,
-}: FaucetRequestProps) {
+export default function FaucetRequest({ publicKey, setChainId }: Props) {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  const requestFaucet = async () => {
-    if (!wallet?.publicKey) return;
-
+  const handleRequest = async () => {
     setLoading(true);
-    setError(null);
-    setSuccess(null);
-
     try {
+      // 1️⃣ Claim via faucet API
       const res = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          publicKey: wallet.publicKey.startsWith("0x")
-            ? wallet.publicKey
-            : "0x" + wallet.publicKey,
-        }),
+        body: JSON.stringify({ publicKey }),
       });
-
       const data = await res.json();
+      if (!data.success) throw new Error(data.error);
 
-      if (!res.ok) {
-        throw new Error(data.error || "Faucet failed");
-      }
+      // 2️⃣ Ambil chainId dari VPS endpoint
+      const chainRes = await fetch(`/api/chainId?owner=${publicKey}`);
+      const { chainId } = await chainRes.json();
+      if (!chainId) throw new Error("ChainId not found");
 
-      // optional: update wallet with chainId if returned
-      if (data.chainId) {
-        setWallet((w) => ({
-          ...w,
-          chainId: data.chainId,
-        }));
-      }
-
-      setSuccess("Faucet success!");
-
-      // trigger balance reload
+      // 3️⃣ Simpan dan trigger balance update
+      localStorage.setItem("chainId", chainId);
+      setChainId(chainId);
       window.dispatchEvent(new Event("balance:update"));
+
+      alert("Faucet berhasil! Balance akan otomatis update.");
     } catch (err: any) {
-      setError(err.message || "Unknown error");
+      console.error(err);
+      alert("Faucet gagal: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-4 border rounded-xl bg-white space-y-2">
+    <div className="space-y-2">
       <button
-        onClick={requestFaucet}
+        onClick={handleRequest}
         disabled={loading}
-        className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
+        className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
       >
-        {loading ? "Requesting..." : "Request Faucet"}
+        {loading ? "Processing..." : "Request Testnet Tokens"}
       </button>
-
-      {error && <div className="text-red-500 text-sm">{error}</div>}
-      {success && <div className="text-green-600 text-sm">{success}</div>}
     </div>
   );
-      }
+    }
