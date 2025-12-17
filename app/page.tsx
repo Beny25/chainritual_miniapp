@@ -81,7 +81,7 @@ export default function Page() {
           </button>
 
           {/* Faucet Request */}
-          <FaucetRequest wallet={wallet} setChainId={setChainId} />
+          <FaucetRequest wallet={wallet} setWallet={setWallet} />
 
           {/* Send Tokens */}
           <button
