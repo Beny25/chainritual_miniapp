@@ -1,17 +1,22 @@
 // app/api/balance/route.ts
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const { publicKey } = await req.json();
-  if (!publicKey) return NextResponse.json({ error: "Missing publicKey" }, { status: 400 });
+const RPC_URL = process.env.NEXT_PUBLIC_LINERA_RPC!;
 
+export async function POST(req: Request) {
   try {
-    const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
-    const VPS_FAUCET_URL = "http://192.210.217.157:8080";
+    const { chainId } = await req.json();
+
+    if (!chainId) {
+      return NextResponse.json(
+        { error: "Missing chainId" },
+        { status: 400 }
+      );
+    }
 
     const query = `
       query {
-        wallet(owner: "${owner}") {
+        chain(chainId: "${chainId}") {
           config {
             balance
           }
@@ -19,17 +24,26 @@ export async function POST(req: Request) {
       }
     `;
 
-    const res = await fetch(VPS_FAUCET_URL, {
+    const res = await fetch(RPC_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
     });
 
-    const data = await res.json();
-    const balance = data?.data?.wallet?.config?.balance ?? 0;
+    const json = await res.json();
+
+    if (json.errors) {
+      throw new Error(json.errors[0].message);
+    }
+
+    const balance = Number(json.data.chain.config.balance || 0);
 
     return NextResponse.json({ balance });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("BALANCE ERROR:", err);
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
-      }
+}
