@@ -1,8 +1,6 @@
 // app/api/faucet/route.ts
 import { NextResponse } from "next/server";
 
-const FAUCET_URL = process.env.NEXT_PUBLIC_LINERA_FAUCET!;
-
 export async function POST(req: Request) {
   try {
     const { publicKey } = await req.json();
@@ -14,51 +12,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const owner = publicKey.startsWith("0x")
-      ? publicKey
-      : `0x${publicKey}`;
+    const faucetUrl = process.env.NEXT_PUBLIC_LINERA_FAUCET!;
 
-    const query = `
-      mutation {
-        claim(owner: "${owner}") {
-          origin {
-            Child {
-              parent
-              chain_index
-            }
-          }
-          config {
-            balance
-          }
-        }
-      }
-    `;
-
-    const res = await fetch(FAUCET_URL, {
+    const res = await fetch(`${faucetUrl}/claim`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        owner: publicKey,
+      }),
     });
 
-    const json = await res.json();
+    const text = await res.text();
 
-    if (json.errors) {
-      throw new Error(json.errors[0].message);
+    // chainId TIDAK dikirim via response
+    // tapi muncul di VPS logs → workaround: return success only
+    if (!res.ok) {
+      throw new Error(text);
     }
-
-    const claim = json.data.claim;
-    const chainId = claim.origin.Child.parent;
-    const balance = Number(claim.config.balance || 0);
 
     return NextResponse.json({
       success: true,
-      chainId,
-      balance,
+      message: "Faucet claimed. Check VPS logs for chainId.",
     });
-  } catch (err: any) {
-    console.error("FAUCET ERROR:", err);
+  } catch (e: any) {
     return NextResponse.json(
-      { error: err.message },
+      { error: e.message },
       { status: 500 }
     );
   }
