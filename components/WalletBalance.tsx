@@ -1,19 +1,19 @@
 // components/WalletBalance.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-export type WalletBalanceProps = {
-  publicKey: string;
+type Props = {
+  chainId: string | null;
 };
 
-export default function WalletBalance({ publicKey }: WalletBalanceProps) {
+export default function WalletBalance({ chainId }: Props) {
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadBalance = async () => {
-    if (!publicKey) return;
+    if (!chainId) return;
 
     setLoading(true);
     setError(null);
@@ -22,20 +22,20 @@ export default function WalletBalance({ publicKey }: WalletBalanceProps) {
       const res = await fetch("/api/balance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-  chainId: wallet.chainId,
-}),
+        body: JSON.stringify({ chainId }),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        setBalance(Number(data.balance || 0));
-      } else {
-        setError(data.error || "Failed to fetch balance");
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch balance");
       }
+
+      setBalance(Number(data.balance || 0));
     } catch (err: any) {
-      setError(err.message || "Unknown error");
+      console.error(err);
+      setError(err.message);
+      setBalance(0);
     } finally {
       setLoading(false);
     }
@@ -43,8 +43,9 @@ export default function WalletBalance({ publicKey }: WalletBalanceProps) {
 
   useEffect(() => {
     loadBalance();
-  }, [publicKey]);
+  }, [chainId]);
 
+  // listen event dari faucet / transfer
   useEffect(() => {
     const handler = () => loadBalance();
     window.addEventListener("balance:update", handler);
@@ -57,4 +58,4 @@ export default function WalletBalance({ publicKey }: WalletBalanceProps) {
       {loading ? "Loading..." : error ? `Error: ${error}` : balance}
     </div>
   );
-}
+  }
