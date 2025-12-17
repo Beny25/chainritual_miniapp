@@ -60,8 +60,13 @@ export default function Page() {
           </div>
 
           {/* Wallet Balance */}
-          <WalletBalance publicKey={wallet.publicKey.startsWith("0x") ? wallet.publicKey : "0x" + wallet.publicKey} key={reloadFlag} />
-
+          <WalletBalance
+  publicKey={
+    wallet.publicKey.startsWith("0x")
+      ? wallet.publicKey
+      : "0x" + wallet.publicKey
+  }
+/>
           {/* Download Wallet */}
           <button
             className="bg-green-600 text-white px-4 py-2 rounded-lg w-full"
