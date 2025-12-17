@@ -1,4 +1,3 @@
-// app/api/faucet/route.ts
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -6,38 +5,31 @@ export async function POST(req: Request) {
     const { publicKey } = await req.json();
 
     if (!publicKey) {
-      return NextResponse.json(
-        { error: "Missing publicKey" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Missing publicKey" });
     }
 
-    const faucetUrl = process.env.NEXT_PUBLIC_LINERA_FAUCET!;
+    const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
 
-    const res = await fetch(`${faucetUrl}/claim`, {
+    const VPS_FAUCET_URL = "http://192.210.217.157:8080"; // Faucet di VPS
+
+    const query = `mutation { claim(owner: "${owner}") }`;
+
+    const res = await fetch(VPS_FAUCET_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        owner: publicKey,
-      }),
+      body: JSON.stringify({ query }),
     });
 
-    const text = await res.text();
+    const data = await res.json();
 
-    // chainId TIDAK dikirim via response
-    // tapi muncul di VPS logs → workaround: return success only
-    if (!res.ok) {
-      throw new Error(text);
+    if (data.errors) {
+      return NextResponse.json({ success: false, error: data.errors[0].message });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Faucet claimed. Check VPS logs for chainId.",
-    });
-  } catch (e: any) {
-    return NextResponse.json(
-      { error: e.message },
-      { status: 500 }
-    );
+    // Balance biasanya 0 dulu, chainId akan diambil via /api/chainId
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("Faucet API error:", err);
+    return NextResponse.json({ success: false, error: err.message || "Unknown error" });
   }
 }
