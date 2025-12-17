@@ -1,19 +1,19 @@
 // components/WalletBalance.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-type Props = {
-  chainId: string | null;
+export type WalletBalanceProps = {
+  publicKey: string;
 };
 
-export default function WalletBalance({ chainId }: Props) {
+export default function WalletBalance({ publicKey }: WalletBalanceProps) {
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadBalance = async () => {
-    if (!chainId) return;
+    if (!publicKey) return;
 
     setLoading(true);
     setError(null);
@@ -22,20 +22,18 @@ export default function WalletBalance({ chainId }: Props) {
       const res = await fetch("/api/balance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chainId }),
+        body: JSON.stringify({ publicKey }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch balance");
+      if (res.ok) {
+        setBalance(Number(data.balance || 0));
+      } else {
+        setError(data.error || "Failed to fetch balance");
       }
-
-      setBalance(Number(data.balance || 0));
     } catch (err: any) {
-      console.error(err);
-      setError(err.message);
-      setBalance(0);
+      setError(err.message || "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -43,9 +41,8 @@ export default function WalletBalance({ chainId }: Props) {
 
   useEffect(() => {
     loadBalance();
-  }, [chainId]);
+  }, [publicKey]);
 
-  // listen event dari faucet / transfer
   useEffect(() => {
     const handler = () => loadBalance();
     window.addEventListener("balance:update", handler);
