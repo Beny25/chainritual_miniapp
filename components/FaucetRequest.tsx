@@ -3,69 +3,79 @@
 import { useState } from "react";
 
 type Props = {
-  wallet: any; // wallet global state
-  setWallet: (w: any) => void; // updater wallet
+  publicKey: string;
 };
 
-export default function FaucetRequest({ wallet, setWallet }: Props) {
+export default function FaucetRequest({ publicKey }: Props) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const handleRequest = async () => {
-    if (!wallet?.publicKey) return alert("Buat wallet dulu bro");
+  const requestFaucet = async () => {
+    if (!publicKey) {
+      setError("Public key not found");
+      return;
+    }
 
     setLoading(true);
+    setError(null);
+    setSuccess(null);
 
     try {
       const res = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey: wallet.publicKey }),
+        body: JSON.stringify({ publicKey }),
       });
 
       const data = await res.json();
 
-      if (data.success) {
-        const newBalance = data.data?.claim?.config?.balance ?? "0";
-
-        if (newBalance === "0") {
-          alert("Faucet sudah pernah diklaim sebelumnya. Saldo tetap.");
-        } else {
-          // Update wallet state global
-          const updatedWallet = { ...wallet, balance: newBalance };
-          setWallet(updatedWallet);
-
-          // Update localStorage
-          localStorage.setItem("balance_" + wallet.publicKey, newBalance);
-
-          // Trigger event untuk komponen lain kalau perlu
-          window.dispatchEvent(new Event("balance:update"));
-
-          alert(`Faucet berhasil! Saldo sekarang: ${newBalance}`);
-        }
-      } else {
-        alert("Faucet gagal: " + data.error);
+      if (!res.ok) {
+        throw new Error(data.error || "Faucet failed");
       }
-    } catch (err: any) {
-      console.error("Faucet request error:", err);
-      alert("Faucet gagal: " + err.message);
-    }
 
-    setLoading(false);
+      // 🔑 Simpan chainId hasil claim
+      localStorage.setItem("linera:chainId", data.chainId);
+
+      // 🔄 Trigger update balance
+      window.dispatchEvent(new Event("balance:update"));
+
+      setSuccess(
+        `Faucet success 🎉\nChain: ${data.chainId.slice(0, 10)}...\nBalance: ${data.balance}`
+      );
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-2">
+    <div className="p-4 border rounded-xl bg-white space-y-3">
+      <div className="text-sm text-gray-600 break-all">
+        <b>Owner:</b> {publicKey}
+      </div>
+
       <button
-        onClick={handleRequest}
+        onClick={requestFaucet}
         disabled={loading}
-        className="bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
+        className="px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50"
       >
-        {loading ? "Requesting..." : "Request Testnet Tokens"}
+        {loading ? "Requesting..." : "Request Faucet"}
       </button>
 
-      {wallet?.balance && (
-        <p className="text-sm mt-2">Balance: {wallet.balance}</p>
+      {success && (
+        <pre className="text-xs bg-green-50 text-green-700 p-2 rounded">
+          {success}
+        </pre>
+      )}
+
+      {error && (
+        <pre className="text-xs bg-red-50 text-red-700 p-2 rounded">
+          {error}
+        </pre>
       )}
     </div>
   );
-}
+  }
