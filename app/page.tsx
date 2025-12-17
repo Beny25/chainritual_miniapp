@@ -5,20 +5,20 @@ import WalletCreateForm from "@/components/WalletCreateForm";
 import WalletLoadForm from "@/components/WalletLoadForm";
 import FaucetRequest from "@/components/FaucetRequest";
 import WalletBalance from "@/components/WalletBalance";
-import SendTokenForm from "@/components/SendTokenForm";
 import { getWalletFromLocal, clearWallet } from "@/lib/wallet";
 import HeaderBanner from "@/components/HeaderBanner";
 import Footer from "@/components/Footer";
 
 export default function Page() {
   const [wallet, setWallet] = useState<any>(null);
-  const [reloadFlag, setReloadFlag] = useState(0);
-
-  const reloadBalance = () => setReloadFlag(prev => prev + 1);
+  const [chainId, setChainId] = useState<string | null>(null);
 
   useEffect(() => {
     const w = getWalletFromLocal();
     if (w) setWallet(w);
+
+    const savedChainId = localStorage.getItem("chainId");
+    if (savedChainId) setChainId(savedChainId);
   }, []);
 
   const handleDownload = () => {
@@ -36,6 +36,8 @@ export default function Page() {
   const handleClear = () => {
     clearWallet();
     setWallet(null);
+    setChainId(null);
+    localStorage.removeItem("chainId");
   };
 
   return (
@@ -60,13 +62,8 @@ export default function Page() {
           </div>
 
           {/* Wallet Balance */}
-          <WalletBalance
-  publicKey={
-    wallet.publicKey.startsWith("0x")
-      ? wallet.publicKey
-      : "0x" + wallet.publicKey
-  }
-/>
+          <WalletBalance chainId={chainId} />
+
           {/* Download Wallet */}
           <button
             className="bg-green-600 text-white px-4 py-2 rounded-lg w-full"
@@ -84,8 +81,8 @@ export default function Page() {
           </button>
 
           {/* Faucet Request */}
-          <FaucetRequest wallet={wallet} setWallet={setWallet} />
-          
+          <FaucetRequest wallet={wallet} setChainId={setChainId} />
+
           {/* Send Tokens */}
           <button
             className="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
@@ -96,7 +93,6 @@ export default function Page() {
         </div>
       )}
 
-      {/* Footer */}
       <Footer />
     </div>
   );
