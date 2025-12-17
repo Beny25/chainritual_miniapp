@@ -1,21 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
-type Props = {
+export type Wallet = {
   publicKey: string;
+  privateKey?: string;
+  chainId?: string;
 };
 
-export default function FaucetRequest({ publicKey }: Props) {
+export type FaucetRequestProps = {
+  wallet: Wallet;
+  setWallet: Dispatch<SetStateAction<Wallet>>;
+};
+
+export default function FaucetRequest({
+  wallet,
+  setWallet,
+}: FaucetRequestProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const requestFaucet = async () => {
-    if (!publicKey) {
-      setError("Public key not found");
-      return;
-    }
+    if (!wallet?.publicKey) return;
 
     setLoading(true);
     setError(null);
@@ -25,7 +32,11 @@ export default function FaucetRequest({ publicKey }: Props) {
       const res = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
+        body: JSON.stringify({
+          publicKey: wallet.publicKey.startsWith("0x")
+            ? wallet.publicKey
+            : "0x" + wallet.publicKey,
+        }),
       });
 
       const data = await res.json();
@@ -34,17 +45,19 @@ export default function FaucetRequest({ publicKey }: Props) {
         throw new Error(data.error || "Faucet failed");
       }
 
-      // 🔑 Simpan chainId hasil claim
-      localStorage.setItem("linera:chainId", data.chainId);
+      // optional: update wallet with chainId if returned
+      if (data.chainId) {
+        setWallet((w) => ({
+          ...w,
+          chainId: data.chainId,
+        }));
+      }
 
-      // 🔄 Trigger update balance
+      setSuccess("Faucet success!");
+
+      // trigger balance reload
       window.dispatchEvent(new Event("balance:update"));
-
-      setSuccess(
-        `Faucet success 🎉\nChain: ${data.chainId.slice(0, 10)}...\nBalance: ${data.balance}`
-      );
     } catch (err: any) {
-      console.error(err);
       setError(err.message || "Unknown error");
     } finally {
       setLoading(false);
@@ -52,30 +65,17 @@ export default function FaucetRequest({ publicKey }: Props) {
   };
 
   return (
-    <div className="p-4 border rounded-xl bg-white space-y-3">
-      <div className="text-sm text-gray-600 break-all">
-        <b>Owner:</b> {publicKey}
-      </div>
-
+    <div className="p-4 border rounded-xl bg-white space-y-2">
       <button
         onClick={requestFaucet}
         disabled={loading}
-        className="px-4 py-2 rounded-lg bg-black text-white disabled:opacity-50"
+        className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
       >
         {loading ? "Requesting..." : "Request Faucet"}
       </button>
 
-      {success && (
-        <pre className="text-xs bg-green-50 text-green-700 p-2 rounded">
-          {success}
-        </pre>
-      )}
-
-      {error && (
-        <pre className="text-xs bg-red-50 text-red-700 p-2 rounded">
-          {error}
-        </pre>
-      )}
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+      {success && <div className="text-green-600 text-sm">{success}</div>}
     </div>
   );
-  }
+      }
