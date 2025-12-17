@@ -4,16 +4,16 @@
 import { useState, useEffect } from "react";
 
 type Props = {
-  publicKey: string;
+  chainId: string | null;
 };
 
-export default function WalletBalance({ publicKey }: Props) {
+export default function WalletBalance({ chainId }: Props) {
   const [balance, setBalance] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadBalance = async () => {
-    if (!publicKey) return;
+    if (!chainId) return;
 
     setLoading(true);
     setError(null);
@@ -22,31 +22,30 @@ export default function WalletBalance({ publicKey }: Props) {
       const res = await fetch("/api/balance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicKey }),
+        body: JSON.stringify({ chainId }),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        setBalance(Number(data.balance || 0));
-      } else {
-        setError(data.error || "Failed to fetch balance");
-        setBalance(0);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch balance");
       }
-    } catch (err: any) {
-      console.error("Error fetching balance:", err);
-      setError(err.message || "Unknown error");
-      setBalance(0);
-    }
 
-    setLoading(false);
+      setBalance(Number(data.balance || 0));
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message);
+      setBalance(0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadBalance();
-  }, [publicKey]);
+  }, [chainId]);
 
-  // Listen update dari FaucetRequest atau SendTokenForm
+  // listen event dari faucet / transfer
   useEffect(() => {
     const handler = () => loadBalance();
     window.addEventListener("balance:update", handler);
