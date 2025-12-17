@@ -1,41 +1,65 @@
 // app/api/faucet/route.ts
 import { NextResponse } from "next/server";
 
+const FAUCET_URL = process.env.NEXT_PUBLIC_LINERA_FAUCET!;
+
 export async function POST(req: Request) {
   try {
     const { publicKey } = await req.json();
 
     if (!publicKey) {
-      return NextResponse.json({ success: false, error: "Missing publicKey" });
+      return NextResponse.json(
+        { error: "Missing publicKey" },
+        { status: 400 }
+      );
     }
 
-    const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
-    const VPS_FAUCET_URL = "http://192.210.217.157:8080"; // VPS faucet
+    const owner = publicKey.startsWith("0x")
+      ? publicKey
+      : `0x${publicKey}`;
 
     const query = `
       mutation {
-        claim(owner: "${owner}")
+        claim(owner: "${owner}") {
+          origin {
+            Child {
+              parent
+              chain_index
+            }
+          }
+          config {
+            balance
+          }
+        }
       }
     `;
 
-    const res = await fetch(VPS_FAUCET_URL, {
+    const res = await fetch(FAUCET_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
     });
 
-    const data = await res.json();
+    const json = await res.json();
 
-    if (data.errors) {
-      return NextResponse.json({ success: false, error: data.errors[0].message });
+    if (json.errors) {
+      throw new Error(json.errors[0].message);
     }
 
-    // Ambil balance real dari response
-    const balance = data.data?.claim?.config?.balance ?? "0";
+    const claim = json.data.claim;
+    const chainId = claim.origin.Child.parent;
+    const balance = Number(claim.config.balance || 0);
 
-    return NextResponse.json({ success: true, data: { claim: { config: { balance } } } });
+    return NextResponse.json({
+      success: true,
+      chainId,
+      balance,
+    });
   } catch (err: any) {
-    console.error(err);
-    return NextResponse.json({ success: false, error: err.message });
+    console.error("FAUCET ERROR:", err);
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
-  }
+}
