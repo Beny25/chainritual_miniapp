@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -81,7 +82,10 @@ export default function Page() {
           </button>
 
           {/* Faucet Request */}
-          <FaucetRequest wallet={wallet} setWallet={setWallet} />
+          <FaucetRequest
+            publicKey={wallet.publicKey.startsWith("0x") ? wallet.publicKey : "0x" + wallet.publicKey}
+            setChainId={setChainId}
+          />
 
           {/* Send Tokens */}
           <button
@@ -96,4 +100,4 @@ export default function Page() {
       <Footer />
     </div>
   );
-}
+            }
