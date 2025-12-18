@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import WalletCreateForm from "@/components/WalletCreateForm";
 import WalletLoadForm from "@/components/WalletLoadForm";
 import FaucetRequest from "@/components/FaucetRequest";
-import WalletBalance from "@/components/WalletBalance";
 import { getWalletFromLocal, clearWallet } from "@/lib/wallet";
 import HeaderBanner from "@/components/HeaderBanner";
 import Footer from "@/components/Footer";
@@ -63,7 +62,7 @@ export default function Page() {
           </div>
 
           {/* Wallet Balance */}
-          <WalletBalance chainId={chainId} />
+          
 
           {/* Download Wallet */}
           <button
