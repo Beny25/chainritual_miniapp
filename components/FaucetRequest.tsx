@@ -23,7 +23,7 @@ export default function FaucetRequest({ publicKey, setChainId }: Props) {
       
       const data = await res.json();
       if (data.success) {
-        const key = "balance_" + wallet.publicKey;
+        const key = "balance_";
         localStorage.setItem(key, data.data.balance);
         window.dispatchEvent(new Event("balance:update"));
         alert("Faucet berhasil! Balance: " + data.data.balance);
