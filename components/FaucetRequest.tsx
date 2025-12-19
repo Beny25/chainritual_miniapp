@@ -22,18 +22,25 @@ export default function FaucetRequest({ publicKey, setChainId }: Props) {
       });
       
       const data = await res.json();
-      if (data.success) {
-        const key = "balance_";
-        localStorage.setItem(key, data.data.balance);
-        window.dispatchEvent(new Event("balance:update"));
-        alert("Faucet berhasil! Balance: " + data.data.balance);
-      } else {
-        alert("Faucet gagal: " + data.error);
-      }
+      if (!data.success) throw new Error(data.error);
+
+      // 2️⃣ Ambil chainId dari VPS endpoint
+      const chainRes = await fetch(`/api/chainId?owner=${publicKey}`);
+      const { chainId } = await chainRes.json();
+      if (!chainId) throw new Error("ChainId not found");
+
+      // 3️⃣ Simpan dan trigger balance update
+      localStorage.setItem("chainId", chainId);
+      setChainId(chainId);
+      window.dispatchEvent(new Event("balance:update"));
+
+      alert("Faucet success");
     } catch (err: any) {
+      console.error(err);
       alert("Faucet gagal: " + err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
