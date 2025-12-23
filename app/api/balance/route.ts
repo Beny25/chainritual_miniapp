@@ -1,3 +1,4 @@
+// app/api/balance/route.ts
 export async function POST(req: Request) {
   const { chainId } = await req.json();
 
@@ -8,18 +9,25 @@ export async function POST(req: Request) {
     );
   }
 
-  // Panggil Rust bridge, bukan langsung 13001
-  const BRIDGE = process.env.NEXT_PUBLIC_LINERA_RPC!;
+  const rpc = process.env.NEXT_PUBLIC_LINERA_RPC!;
 
-  const res = await fetch(`${BRIDGE}/balance`, {
+  const res = await fetch(rpc, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chainId }),
+    body: JSON.stringify({
+      query: `
+        query {
+          chain(chainId: "${chainId}") {
+            balance
+          }
+        }
+      `,
+    }),
   });
 
   const json = await res.json();
 
   return Response.json({
-    balance: json.balance ?? 0,
+    balance: json.data.chain.balance,
   });
 }
