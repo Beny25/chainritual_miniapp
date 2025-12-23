@@ -11,24 +11,22 @@ export async function POST(req: Request) {
 
     const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
 
-    const VPS_FAUCET_URL = "http://208.76.40.208:8080"; // Faucet di VPS
+    // Panggil Rust bridge, bukan langsung 8080
+    const BRIDGE_URL = process.env.NEXT_PUBLIC_LINERA_FAUCET!;
 
-    const query = `mutation { claim(owner: "${owner}") }`;
-
-    const res = await fetch(VPS_FAUCET_URL, {
+    const res = await fetch(`${BRIDGE_URL}/faucet`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ publicKey: owner }),
     });
 
     const data = await res.json();
 
-    if (data.errors) {
-      return NextResponse.json({ success: false, error: data.errors[0].message });
+    if (!data.success) {
+      return NextResponse.json({ success: false, error: data.error || "Unknown error" });
     }
 
-    // Balance biasanya 0 dulu, chainId akan diambil via /api/chainId
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, chainId: data.chainId });
   } catch (err: any) {
     console.error("Faucet API error:", err);
     return NextResponse.json({ success: false, error: err.message || "Unknown error" });
