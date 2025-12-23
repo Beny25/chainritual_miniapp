@@ -14,7 +14,7 @@ export default function FaucetRequest({ publicKey, setChainId }: Props) {
   const handleRequest = async () => {
     setLoading(true);
     try {
-      // 1️⃣ Claim via faucet API
+      // 1️⃣ Claim via faucet API (Rust bridge)
       const res = await fetch("/api/faucet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -24,14 +24,12 @@ export default function FaucetRequest({ publicKey, setChainId }: Props) {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      // 2️⃣ Ambil chainId dari VPS endpoint
-      const chainRes = await fetch(`/api/chainId?owner=${publicKey}`);
-      const { chainId } = await chainRes.json();
-      if (!chainId) throw new Error("ChainId not found");
-
-      // 3️⃣ Simpan dan trigger balance update
+      // 2️⃣ Simpan chainId
+      const { chainId } = data;
       localStorage.setItem("chainId", chainId);
       setChainId(chainId);
+
+      // Trigger balance update
       window.dispatchEvent(new Event("balance:update"));
 
       alert("Faucet success");
@@ -54,4 +52,4 @@ export default function FaucetRequest({ publicKey, setChainId }: Props) {
       </button>
     </div>
   );
-    }
+}
