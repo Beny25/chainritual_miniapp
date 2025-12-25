@@ -7,23 +7,21 @@ const links = [
 ];
 
 export default function Footer() {
-  function open(url: string) {
-    // buka link di tab baru
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
   return (
     <footer className="mt-4 text-center text-gray-700">
       <p className="text-sm mb-1">
         👉 Follow us:&nbsp;
         {links.map((link, i) => (
           <span key={link.url}>
-            <button
-              onClick={() => open(link.url)}
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 underline"
+              aria-label={`Follow on ${link.name}`}
             >
               {link.name}
-            </button>
+            </a>
             {i < links.length - 1 && " · "}
           </span>
         ))}
