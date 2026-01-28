@@ -1,34 +1,23 @@
 // app/api/faucet/route.ts
-import { NextResponse } from "next/server";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { requestFaucet } from "@/services/lineraFaucet";
 
-export async function POST(req: Request) {
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") {
+    return res.status(405).end();
+  }
+
+  const { publicKey } = req.body;
+
+  if (!publicKey) {
+    return res.status(400).json({ error: "Missing publicKey" });
+  }
+
   try {
-    const { publicKey } = await req.json();
-
-    if (!publicKey) {
-      return NextResponse.json({ success: false, error: "Missing publicKey" });
-    }
-
-    const owner = publicKey.startsWith("0x") ? publicKey : "0x" + publicKey;
-
-    // Panggil Rust bridge, bukan langsung 8080
-    const BRIDGE_URL = process.env.NEXT_PUBLIC_LINERA_FAUCET!;
-
-    const res = await fetch(`${BRIDGE_URL}/faucet`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ publicKey: owner }),
-    });
-
-    const data = await res.json();
-
-    if (!data.success) {
-      return NextResponse.json({ success: false, error: data.error || "Unknown error" });
-    }
-
-    return NextResponse.json({ success: true, chainId: data.chainId });
+    const result = requestFaucet(publicKey);
+    res.status(200).json(result);
   } catch (err: any) {
-    console.error("Faucet API error:", err);
-    return NextResponse.json({ success: false, error: err.message || "Unknown error" });
+    res.status(500).json({ error: err.message });
   }
 }
+
