@@ -1,23 +1,29 @@
 // app/api/faucet/route.ts
-import type { NextApiRequest, NextApiResponse } from "next";
+
+import { NextResponse } from "next/server";
 import { requestFaucet } from "@/services/lineraFaucet";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).end();
-  }
-
-  const { publicKey } = req.body;
-
-  if (!publicKey) {
-    return res.status(400).json({ error: "Missing publicKey" });
-  }
-
+export async function POST(req: Request) {
   try {
-    const result = requestFaucet(publicKey);
-    res.status(200).json(result);
+    const body = await req.json();
+    const { publicKey } = body;
+
+    if (!publicKey) {
+      return NextResponse.json(
+        { error: "Missing publicKey" },
+        { status: 400 }
+      );
+    }
+
+    const result = await requestFaucet(publicKey);
+
+    return NextResponse.json(result, { status: 200 });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return NextResponse.json(
+      { error: err.message || "Internal error" },
+      { status: 500 }
+    );
   }
 }
+
 
